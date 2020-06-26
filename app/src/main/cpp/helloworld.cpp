@@ -1,25 +1,25 @@
-
-//
-// Created by Patrick Martin on 1/30/19.
-//
-
 #include <memory>
 #include <cassert>
 #include <cmath>
 #include <ctime>
 #include <fstream>
 #include <sstream>
-#include <string>
 
 #include <android_native_app_glue.h>
 #include <jni.h>
 #include <android/log.h>
+#include <android/asset_manager.h>
+#include <android/asset_manager_jni.h>
 
 #include <EGL/egl.h>
 #include <GLES3/gl3.h>
 
+#include "NDKHelper.h"
+/*
 #define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "native-activity", __VA_ARGS__))
 #define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, "native-activity", __VA_ARGS__))
+*/
+#define HELPER_CLASS_NAME "com/example/softshadow/NDKHelper"
 
 const EGLint attribs[] = {
         EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
@@ -43,12 +43,13 @@ EGLDisplay display;
 GLuint vao, vbo;
 GLuint program;
 
-float tri[9] = {
+float tri[9];
+/*= {
         -0.5f, -0.5f, 0.0f,
         0.5f, -0.5f, 0.0f,
         0.0f, 0.5f, 0.0f
 };
-
+*/
 bool init_display(struct android_app *app) {
     // initialize OpenGL ES and EGL
     display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
@@ -76,6 +77,22 @@ bool init_display(struct android_app *app) {
     // initialize gl state
     glEnable(GL_CULL_FACE);
     glDisable(GL_DEPTH_TEST);
+
+    // read triangle model file
+    std::vector<uint8_t> buf;
+    ndk_helper::JNIHelper::GetInstance()->ReadFile("triangle.txt", &buf);
+    std::stringstream stream;
+    for (int i=0; i<buf.size(); i++) {
+        stream << buf[i];
+    }
+    for (int i=0; ; i++) {
+        stream >> tri[i];
+        LOGI("%f", tri[i]);
+        if (stream.eof()) {
+            break;
+        }
+    }
+
 
     // create triangle vbo, vao
     glGenBuffers(1, &vbo);
@@ -192,6 +209,7 @@ void handle_cmd(android_app *pApp, int32_t cmd) {
 void android_main(struct android_app *pApp) {
     pApp->onAppCmd = handle_cmd;
 
+    ndk_helper::JNIHelper::Init(pApp->activity, HELPER_CLASS_NAME);
     int events;
     android_poll_source *pSource;
     do {
