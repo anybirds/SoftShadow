@@ -15,6 +15,10 @@
 #include <GLES3/gl3.h>
 
 #include "NDKHelper.h"
+
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb/stb_image.h>
+
 /*
 #define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "native-activity", __VA_ARGS__))
 #define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, "native-activity", __VA_ARGS__))
@@ -42,8 +46,9 @@ EGLDisplay display;
 
 GLuint vao, vbo;
 GLuint program;
+GLuint texture;
 
-float tri[9];
+float tri[15];
 /*= {
         -0.5f, -0.5f, 0.0f,
         0.5f, -0.5f, 0.0f,
@@ -78,6 +83,35 @@ bool init_display(struct android_app *app) {
     glEnable(GL_CULL_FACE);
     glDisable(GL_DEPTH_TEST);
 
+    // read brick image
+    std::vector<uint8_t> imgBuf;
+    ndk_helper::JNIHelper::GetInstance()->ReadFile("brick.jpg", &imgBuf);
+    int width, height, nrChannels;
+    uint8_t *imgBits = stbi_load_from_memory(imgBuf.data(), imgBuf.size(), &width, &height, &nrChannels, 0);
+
+    GLenum format;
+    switch (nrChannels) {
+        case 3:
+            format = GL_RGB;
+            break;
+        case 4:
+            format = GL_RGBA;
+            break;
+        default:
+            format = GL_RGB;
+            break;
+    }
+
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, (GLint)format, width, height, 0, format, GL_UNSIGNED_BYTE, imgBits);
+    stbi_image_free(imgBits);
+
     // read triangle model file
     std::vector<uint8_t> buf;
     ndk_helper::JNIHelper::GetInstance()->ReadFile("triangle.txt", &buf);
@@ -93,27 +127,30 @@ bool init_display(struct android_app *app) {
         }
     }
 
-
     // create triangle vbo, vao
     glGenBuffers(1, &vbo);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, 36, tri, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 60, tri, GL_STATIC_DRAW);
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 12, nullptr);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 20, 0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 20, (void *)12);
 
     // complie shader
     GLuint vert = glCreateShader(GL_VERTEX_SHADER);
     const char *sourcev_cstr = "#version 320 es\n"
                                "layout(location = 0) in vec3 pos;\n"
-                               "\n"
+                               "layout(location = 1) in vec2 uv_v;\n"
+                               "out vec2 uv_f;\n"
                                "void main() {\n"
                                "    gl_Position = vec4(pos.x, pos.y, pos.z, 1.0);\n"
+                               "    uv_f = uv_v;\n"
                                "}";
     glShaderSource(vert, 1, &sourcev_cstr, NULL);
     glCompileShader(vert);
-    GLint status = 10;
+    GLint status = 0;
     glGetShaderiv(vert, GL_COMPILE_STATUS, &status);
     if (status == GL_FALSE)
     {
@@ -128,9 +165,11 @@ bool init_display(struct android_app *app) {
     GLuint frag = glCreateShader(GL_FRAGMENT_SHADER);
     const char *sourcef_cstr = "#version 320 es\n"
                                "precision mediump float;\n"
+                               "uniform sampler2D sampler;\n"
+                               "in vec2 uv_f;\n"
                                "out vec4 output_color;\n"
                                "void main() {\n"
-                               "    output_color = vec4(1.0f, 0.0f, 0.0f, 1.0f);\n"
+                               "    output_color = texture(sampler, uv_f);\n"
                                "}";
     glShaderSource(frag, 1, &sourcef_cstr, NULL);
     glCompileShader(frag);
@@ -187,6 +226,9 @@ void draw_frame() {
     glUseProgram(program);
     glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glActiveTexture(GL_TEXTURE0);
+    glUniform1i(glGetUniformLocation(program, "sampler"), 0);
+    glBindTexture(GL_TEXTURE_2D, texture);
     glDrawArrays(GL_TRIANGLES, 0, 3);
 
     eglSwapBuffers(display, surface);
