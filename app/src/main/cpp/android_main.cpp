@@ -18,7 +18,9 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>
-
+#include "assimp/include/assimp/Importer.hpp"
+#include "assimp/include/assimp/scene.h"
+#include "assimp/include/assimp/postprocess.h"
 /*
 #define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "native-activity", __VA_ARGS__))
 #define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, "native-activity", __VA_ARGS__))
@@ -113,6 +115,8 @@ bool init_display(struct android_app *app) {
     stbi_image_free(imgBits);
 
     // read triangle model file
+    Assimp::Importer *importer = new Assimp::Importer();
+    LOGI("%llx", (unsigned long long)importer);
     std::vector<uint8_t> buf;
     ndk_helper::JNIHelper::GetInstance()->ReadFile("triangle.txt", &buf);
     std::stringstream stream;

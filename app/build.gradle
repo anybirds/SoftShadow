@@ -26,6 +26,11 @@ android {
         }
     }
 
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['libs/assimp/build/Debug']
+        }
+    }
 }
 
 dependencies {
