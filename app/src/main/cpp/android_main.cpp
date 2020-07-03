@@ -27,6 +27,9 @@
 */
 #define HELPER_CLASS_NAME "com/example/softshadow/NDKHelper"
 
+#include "Model.h"
+#include "Mesh.h"
+
 const EGLint attribs[] = {
         EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
         EGL_BLUE_SIZE, 8,

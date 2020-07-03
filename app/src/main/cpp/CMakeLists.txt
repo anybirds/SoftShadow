@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.6.0)
 
 # set up common compile options
-set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Werror -fno-exceptions -fno-rtti")
+# set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Werror -fno-exceptions -fno-rtti")
 
 set(LibsDir ${CMAKE_CURRENT_SOURCE_DIR}/../../../libs)
 set(NDKHelperDir ${LibsDir}/NDKHelper)
@@ -32,7 +32,8 @@ add_library(SoftShadow SHARED
 target_include_directories(SoftShadow PRIVATE
         ${LibsDir}
         ${AssimpDir}/include
-        ${AssimpDir}/build/${CMAKE_BUILD_TYPE}/${ANDROID_ABI}/include)
+        ${AssimpDir}/build/${CMAKE_BUILD_TYPE}/${ANDROID_ABI}/include
+        ${LibsDir}/glm)
 
 target_link_libraries(SoftShadow
         PRIVATE
