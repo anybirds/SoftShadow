@@ -50,13 +50,6 @@ GLuint vao, vbo;
 GLuint program;
 GLuint texture;
 
-float tri[15];
-/*= {
-        -0.5f, -0.5f, 0.0f,
-        0.5f, -0.5f, 0.0f,
-        0.0f, 0.5f, 0.0f
-};
-*/
 bool init_display(struct android_app *app) {
     // initialize OpenGL ES and EGL
     display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
@@ -115,26 +108,74 @@ bool init_display(struct android_app *app) {
     stbi_image_free(imgBits);
 
     // read triangle model file
-    Assimp::Importer *importer = new Assimp::Importer();
-    LOGI("%llx", (unsigned long long)importer);
     std::vector<uint8_t> buf;
-    ndk_helper::JNIHelper::GetInstance()->ReadFile("triangle.txt", &buf);
-    std::stringstream stream;
-    for (int i=0; i<buf.size(); i++) {
-        stream << buf[i];
+    ndk_helper::JNIHelper::GetInstance()->ReadFile("triangle.obj", &buf);
+
+    Assimp::Importer *importer = new Assimp::Importer();
+    LOGI("importer created");
+    const aiScene *scene = importer->ReadFileFromMemory(buf.data(), buf.size(), aiProcess_Triangulate);
+    if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
+        LOGI("scene read fail");
+        return false;
     }
-    for (int i=0; ; i++) {
-        stream >> tri[i];
-        LOGI("%f", tri[i]);
-        if (stream.eof()) {
-            break;
+    LOGI("scene read");
+    if (!scene->HasMeshes()) {
+        LOGI("scene has no meshes");
+        return false;
+    }
+    aiMesh *aimesh = scene->mMeshes[0];
+    LOGI("mesh read");
+    unsigned base;
+
+    unsigned acnt = 3;
+    unsigned *attrib = new unsigned[acnt]();
+    if (aimesh->HasPositions()) {
+        attrib[0] = 3;
+    }
+    if (aimesh->HasNormals()) {
+        attrib[1] = 3;
+    }
+    if (aimesh->HasTextureCoords(0)) {
+        attrib[2] = 2;
+    }
+    unsigned asize = 0; // number of floats for each vertex
+    for (unsigned i = 0; i < acnt; i++) {
+        asize += attrib[i];
+        LOGI("%d", asize);
+    }
+    LOGI("asize: %d", asize);
+
+    unsigned vcnt = aimesh->mNumVertices;
+    LOGI("vcnt: %d", vcnt);
+    float *ver = new float[vcnt * asize];
+    base = 0;
+    for (unsigned i = 0; i < aimesh->mNumVertices; i++) {
+        if (aimesh->HasPositions()) {
+            ver[base] = aimesh->mVertices[i].x;
+            ver[base + 1] = aimesh->mVertices[i].y;
+            ver[base + 2] = aimesh->mVertices[i].z;
+            LOGI("%f %f %f", ver[base], ver[base+1], ver[base+2]);
+            base += 3;
+        }
+        if (aimesh->HasNormals()) {
+            ver[base] = aimesh->mNormals[i].x;
+            ver[base + 1] = aimesh->mNormals[i].y;
+            ver[base + 2] = aimesh->mNormals[i].z;
+            LOGI("%f %f %f", ver[base], ver[base+1], ver[base+2]);
+            base += 3;
+        }
+        if (aimesh->HasTextureCoords(0)) { // texture coordinate set 0
+            ver[base] = aimesh->mTextureCoords[0][i].x;
+            ver[base + 1] = aimesh->mTextureCoords[0][i].y;
+            LOGI("%f %f", ver[base], ver[base+1]);
+            base += 2;
         }
     }
 
     // create triangle vbo, vao
     glGenBuffers(1, &vbo);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, 60, tri, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 60, ver, GL_STATIC_DRAW);
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
     glEnableVertexAttribArray(0);
