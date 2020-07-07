@@ -24,6 +24,8 @@ public:
     void SetMaterial(Material *material) { this->material = material; }
     Mesh *GetMesh() const { return mesh; }
     void SetMesh(Mesh *mesh) { this->mesh = mesh; }
+
+    friend class Camera;
 };
 
 #endif

@@ -19,6 +19,8 @@ private:
 public:
     Mesh(Model *model, int index = 0);
     virtual ~Mesh();
+
+    friend class Camera;
 };
 
 #endif

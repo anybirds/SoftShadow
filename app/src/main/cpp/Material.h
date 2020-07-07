@@ -44,6 +44,8 @@ public:
     void SetMatrixArray(const char *name, const glm::mat4 *value, int length);
 
     void UseTextures();
+
+    friend class Camera;
 };
 
 #endif
