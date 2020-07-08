@@ -7,8 +7,9 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>
 
+#include "Component.h"
+
 class Transform;
-class Component;
 
 class GameObject {
 private:
@@ -28,7 +29,7 @@ public:
     template <typename T>
     bool AddComponent(Component *component);
     template <typename T>
-    bool RemoveComponent();
+    bool RemoveComponent(Component *component);
 
     friend class Component;
 };
@@ -51,17 +52,19 @@ bool GameObject::AddComponent(Component *component) {
         return false;
     }
     components.insert({key, component});
+    component->SetGameObject(this);
     return true;
 }
 
 template <typename T>
-bool GameObject::RemoveComponent() {
+bool GameObject::RemoveComponent(Component *component) {
     size_t key = typeid(T).hash_code();
     auto it = components.find(key);
     if (it == components.end()) {
         return false;
     }
     components.erase(it);
+    component->SetGameObject(nullptr);
     return true;
 }
 

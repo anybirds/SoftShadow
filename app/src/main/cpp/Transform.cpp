@@ -5,9 +5,9 @@
 
 using namespace glm;
 
-Transform::Transform(GameObject *gameObject, const glm::vec3 &localPosition,
-                     const glm::quat &localRotation, const glm::vec3 localScale,
-                     Transform *parent) : Component(gameObject), localPosition(localPosition), localRotation(localRotation), localScale(localScale), parent(parent) , children(), updated(false) {
+Transform::Transform(const glm::vec3 &localPosition,
+                     const glm::quat &localRotation, const glm::vec3 &localScale,
+                     Transform *parent) : localPosition(localPosition), localRotation(localRotation), localScale(localScale), parent(parent) , children(), updated(false) {
     localEulerAngles = degrees(eulerAngles(localRotation));
     localToWorldMatrix = GetLocalToWorldMatrix();
 }

@@ -8,7 +8,7 @@ using namespace std;
 
 unordered_set<Renderer *> Renderer::renderers;
 
-Renderer::Renderer(GameObject *gameObject, Material *material, Mesh *mesh) : Component(gameObject), material(material), mesh(mesh) {
+Renderer::Renderer(Material *material, Mesh *mesh) : material(material), mesh(mesh) {
     renderers.insert(this);
 }
 

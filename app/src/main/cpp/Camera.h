@@ -17,7 +17,7 @@ private:
     glm::mat4 normalization;
 
 public:
-    Camera(GameObject *gameObject, const glm::mat4 &normalization);
+    Camera(const glm::mat4 &normalization);
     virtual ~Camera();
 
     void Render();

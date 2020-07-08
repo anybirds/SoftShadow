@@ -8,7 +8,7 @@ private:
     GameObject *gameObject;
 
 public:
-    Component(GameObject *gameObject);
+    Component();
     virtual ~Component();
 
     GameObject *GetGameObject() const { return gameObject; }

@@ -23,7 +23,7 @@ private:
     void PropagateUpdate();
 
 public:
-    Transform(GameObject *gameObject, const glm::vec3 &localPosition, const glm::quat &localRotation, const glm::vec3 &localScale, Transform *parent = nullptr);
+    Transform(const glm::vec3 &localPosition, const glm::quat &localRotation, const glm::vec3 &localScale, Transform *parent = nullptr);
     virtual ~Transform();
 
     const glm::vec3 &GetLocalPosition() const { return localPosition; }

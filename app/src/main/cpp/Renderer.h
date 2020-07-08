@@ -17,7 +17,7 @@ private:
     Mesh *mesh;
 
 public:
-    Renderer(GameObject *gameObject, Material *material, Mesh *mesh);
+    Renderer(Material *material, Mesh *mesh);
     virtual ~Renderer();
 
     Material *GetMaterial() const { return material; }

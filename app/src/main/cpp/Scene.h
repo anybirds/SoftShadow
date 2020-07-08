@@ -24,7 +24,7 @@ private:
     Camera *mainCameraCamera;
 
 public:
-    Scene::Scene();
+    Scene();
     virtual ~Scene();
 };
 

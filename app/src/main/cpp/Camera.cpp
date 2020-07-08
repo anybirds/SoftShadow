@@ -17,7 +17,7 @@ void Camera::SetMainCamera(Camera *mainCamera) {
     Camera::mainCamera = mainCamera;
 }
 
-Camera::Camera(GameObject *gameObject, const glm::mat4 &normalization) : Component(gameObject), normalization(normalization) {
+Camera::Camera(const glm::mat4 &normalization) : normalization(normalization) {
 
 }
 
