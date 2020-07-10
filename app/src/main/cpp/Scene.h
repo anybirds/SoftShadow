@@ -9,19 +9,21 @@ class Model;
 class Renderer;
 class Shader;
 class Texture;
+class RotateScript;
 
 class Scene {
 private:
-    Model *triModel;
-    Texture *triTexture;
+    Model *girlModel;
+    Texture *girlTexture;
     Shader *unlitVertexShader;
     Shader *unlitFragmentShader;
-    Material *triMaterial;
-    GameObject *triGameObject;
-    Renderer *triRenderer;
-    Mesh *triMesh;
+    Material *girlMaterial;
+    GameObject *girlGameObject;
+    Renderer *girlRenderer;
+    Mesh *girlMesh;
     GameObject *mainCameraGameObject;
     Camera *mainCameraCamera;
+    RotateScript *girlRotateScript;
 
 public:
     Scene();

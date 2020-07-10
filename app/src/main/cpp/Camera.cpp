@@ -39,7 +39,8 @@ void Camera::Render() {
     glGetIntegerv(GL_CULL_FACE_MODE, &cull_face_mode);
 
     glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
+    glDepthFunc(GL_LEQUAL);
+    glDepthMask(GL_TRUE);
 
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);

@@ -10,12 +10,15 @@
 
 #include "Camera.h"
 #include "Scene.h"
+#include "Script.h"
+#include "Time.h"
 
 const EGLint attribs[] = {
         EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
         EGL_BLUE_SIZE, 8,
         EGL_GREEN_SIZE, 8,
         EGL_RED_SIZE, 8,
+        EGL_DEPTH_SIZE, 24,
         EGL_NONE
 };
 const EGLint context_attribs[] = {
@@ -60,6 +63,10 @@ bool init_display(struct android_app *app) {
         LOGI("OpenGL Info: %s", info);
     }
 
+    glClearDepthf(1.0f);
+    Time::Init();
+    Script::Start();
+
     // create the pre-defined scene
     scene = new Scene();
 
@@ -92,6 +99,8 @@ void draw_frame() {
     }
 
     // render from the main camera
+    Time::Tick();
+    Script::Update();
     Camera::GetMainCamera()->Render();
     eglSwapBuffers(display, surface);
 }

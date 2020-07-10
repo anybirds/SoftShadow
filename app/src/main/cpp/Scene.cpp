@@ -6,6 +6,7 @@
 #include "Mesh.h"
 #include "Model.h"
 #include "Renderer.h"
+#include "RotateScript.h"
 #include "Scene.h"
 #include "Shader.h"
 #include "Texture.h"
@@ -16,36 +17,39 @@ using namespace glm;
 extern EGLint width, height;
 
 Scene::Scene() {
-    triModel = new Model("triangle.obj");
-    triMesh = new Mesh(triModel);
-    triTexture = new Texture("brick.jpg");
+    girlModel = new Model("girl.obj");
+    girlMesh = new Mesh(girlModel);
+    girlTexture = new Texture("girl_diffuse.png");
     unlitVertexShader = new Shader("unlit_vert.glsl", GL_VERTEX_SHADER);
     unlitFragmentShader = new Shader("unlit_frag.glsl", GL_FRAGMENT_SHADER);
-    triMaterial = new Material(unlitVertexShader, unlitFragmentShader);
-    triMaterial->SetMainTexture(triTexture);
+    girlMaterial = new Material(unlitVertexShader, unlitFragmentShader);
+    girlMaterial->SetMainTexture(girlTexture);
 
-    mainCameraGameObject = new GameObject(vec3(0.0f, 0.0f, 3.0f), mat4(1.0f), vec3(1.0f));
+    mainCameraGameObject = new GameObject(vec3(0.0f, 0.0f, 5.0f), mat4(1.0f), vec3(1.0f));
     // how to get screen width and height?
     mainCameraCamera = new Camera(perspective(radians(60.0f), (float)width / (float)height, 0.1f, 1000.0f));
     mainCameraGameObject->AddComponent<Camera>(mainCameraCamera);
     Camera::SetMainCamera(mainCameraCamera);
 
-    triGameObject = new GameObject(vec3(0.0f), mat4(1.0f), vec3(1.0f));
-    triRenderer = new Renderer(triMaterial, triMesh);
-    triGameObject->AddComponent<Renderer>(triRenderer);
-    triRenderer->SetMaterial(triMaterial);
-    triRenderer->SetMesh(triMesh);
+    girlGameObject = new GameObject(vec3(0.0f, -2.0f, 0.0f), quat(radians(vec3(90.0f, 90.0f, -180.0f))), vec3(0.002f));
+    girlRenderer = new Renderer(girlMaterial, girlMesh);
+    girlGameObject->AddComponent<Renderer>(girlRenderer);
+    girlRenderer->SetMaterial(girlMaterial);
+    girlRenderer->SetMesh(girlMesh);
+    girlRotateScript = new RotateScript();
+    girlGameObject->AddComponent<RotateScript>(girlRotateScript);
 }
 
 Scene::~Scene() {
-    delete triModel;
-    delete triTexture;
+    delete girlModel;
+    delete girlTexture;
     delete unlitVertexShader;
     delete unlitFragmentShader;
-    delete triMaterial;
-    delete triGameObject;
-    delete triRenderer;
-    delete triMesh;
+    delete girlMaterial;
+    delete girlGameObject;
+    delete girlRenderer;
+    delete girlMesh;
     delete mainCameraGameObject;
     delete mainCameraCamera;
+    delete girlRotateScript;
 }
