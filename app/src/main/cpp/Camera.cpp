@@ -1,9 +1,10 @@
 #include "Camera.h"
 #include "GameObject.h"
-#include "Transform.h"
+#include "Light.h"
 #include "Material.h"
 #include "Mesh.h"
 #include "Renderer.h"
+#include "Transform.h"
 
 using namespace glm;
 
@@ -56,16 +57,27 @@ void Camera::Render() {
 
         GLuint location;
 
-        location = glGetUniformLocation(material->program, "_MODEL");
-
         mat4 _MODEL = rend->GetGameObject()->GetTransform()->GetLocalToWorldMatrix();
-        glUniformMatrix4fv(location, 1, GL_FALSE, (const GLfloat *)&_MODEL);
-
-        location = glGetUniformLocation(material->program, "_CAM");
         mat4 _CAM = GetGameObject()->GetTransform()->GetLocalToWorldMatrix();
-        glUniformMatrix4fv(location, 1, GL_FALSE, (const GLfloat *)&_CAM);
-        location = glGetUniformLocation(material->program, "_NORM");
-        glUniformMatrix4fv(location, 1, GL_FALSE, (const GLfloat *)&normalization);
+        mat4 _NORM = normalization;
+        mat4 _NVM = inverse(_MODEL);
+        _NVM[0][3] = 0.0f; _NVM[1][3] = 0.0f; _NVM[2][3] = 0.0f;
+        _NVM = transpose(_NVM);
+        mat4 _MVP = _NORM * inverse(_CAM) * _MODEL;
+
+        material->SetMatrix("_MODEL", _MODEL);
+        material->SetMatrix("_CAM", _CAM);
+        material->SetMatrix("_NORM", _NORM);
+        material->SetMatrix("_NVM", _NVM);
+        material->SetMatrix("_MVP", _MVP);
+
+        Light *light = Light::GetMainLight();
+        material->SetVector("_LIGHT._AMBIENT", light->ambient);
+        material->SetVector("_LIGHT._DIFFUSE", light->diffuse);
+        material->SetVector("_LIGHT._SPECULAR", light->specular);
+        mat3 _LIGHT_ORIENTATION = toMat3(light->GetGameObject()->GetTransform()->GetRotation());
+        vec3 _LIGHT_DIR = _LIGHT_ORIENTATION[2];
+        material->SetVector("_LIGHT._DIR", _LIGHT_DIR);
 
         if (!mesh->icnt) {
             // mesh without EBO

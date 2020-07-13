@@ -13,6 +13,9 @@ Texture::Texture(const string &path) {
         throw exception();
     }
 
+    // flip the y-axis
+    stbi_set_flip_vertically_on_load(true);
+
     int width, height, channel;
     uint8_t *image = stbi_load_from_memory(buf.data(), buf.size(), &width, &height, &channel, 0);
 

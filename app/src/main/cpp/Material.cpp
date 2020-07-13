@@ -124,46 +124,67 @@ vector<mat4> Material::GetMatrixArray(const char *name) const {
 }
 
 void Material::SetInteger(const char *name, int value) {
+    glUseProgram(program);
     GLint location = glGetUniformLocation(program, name);
     glUniform1i(location, value);
 }
 
 void Material::SetIntegerArray(const char *name, const int *value, int length) {
+    glUseProgram(program);
     GLint location = glGetUniformLocation(program, name);
     glUniform1iv(location, length, value);
 }
 
 void Material::SetFloat(const char *name, float value) {
+    glUseProgram(program);
     GLint location = glGetUniformLocation(program, name);
     glUniform1f(location, value);
 }
 
 void Material::SetFloatArray(const char *name, const float *value, int length) {
+    glUseProgram(program);
     GLint location = glGetUniformLocation(program, name);
     glUniform1fv(location, length, value);
 }
 
+void Material::SetVector(const char *name, const vec3 &value) {
+    glUseProgram(program);
+    GLint location = glGetUniformLocation(program, name);
+    glUniform3fv(location, 1, (const GLfloat *)&value);
+}
+
 void Material::SetVector(const char *name, const vec4 &value) {
+    glUseProgram(program);
     GLint location = glGetUniformLocation(program, name);
     glUniform4fv(location, 1, (const GLfloat *)&value);
 }
 
+void Material::SetVectorArray(const char *name, const vec3 *value, int length) {
+    glUseProgram(program);
+    GLint location = glGetUniformLocation(program, name);
+    glUniform3fv(location, length, (const GLfloat *)value);
+}
+
 void Material::SetVectorArray(const char *name, const vec4 *value, int length) {
+    glUseProgram(program);
     GLint location = glGetUniformLocation(program, name);
     glUniform4fv(location, length, (const GLfloat *)value);
 }
 
 void Material::SetMatrix(const char *name, const mat4 &value) {
+    glUseProgram(program);
     GLint location = glGetUniformLocation(program, name);
     glUniformMatrix4fv(location, 1, GL_FALSE, (const GLfloat *)&value);
 }
 
 void Material::SetMatrixArray(const char *name, const mat4 *value, int length) {
+    glUseProgram(program);
     GLint location = glGetUniformLocation(program, name);
     glUniformMatrix4fv(location, length, GL_FALSE, (const GLfloat *)value);
 }
 
 void Material::UseTextures() {
+    glUseProgram(program);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, mainTexture->id);
 
