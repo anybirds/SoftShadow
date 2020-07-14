@@ -7,8 +7,8 @@ layout(location = 2) in vec2 _VERT_UV;
 uniform mat4 _MODEL;
 uniform mat4 _CAM;
 uniform mat4 _NORM;
-uniform mat4 _NVM;
-uniform mat4 _MVP;
+uniform mat4 _NVM; // Normal Vector Matrix
+uniform mat4 _MVP; // Model View Projection
 
 out vec3 _FRAG_POS;
 out vec3 _FRAG_NORM;

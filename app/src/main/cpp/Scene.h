@@ -27,6 +27,16 @@ private:
     RotateScript *girlRotateScript;
     GameObject *lightGameObject;
     Light *lightLight;
+    Shader *shadowMapVertexShader;
+    Shader *shadowMapFragmentShader;
+    Material *shadowMapMaterial;
+    Model *tileModel;
+    Texture *tileTexture;
+    Material *tileMaterial;
+    GameObject *tileGameObject;
+    Renderer *tileRenderer;
+    Mesh *tileMesh;
+
 
 public:
     Scene();

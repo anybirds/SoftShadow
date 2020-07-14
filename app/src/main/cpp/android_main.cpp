@@ -63,7 +63,6 @@ bool init_display(struct android_app *app) {
         LOGI("OpenGL Info: %s", info);
     }
 
-    glClearDepthf(1.0f);
     Time::Init();
     Script::Start();
 

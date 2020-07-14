@@ -21,6 +21,7 @@ public:
     virtual ~Mesh();
 
     friend class Camera;
+    friend class Light;
 };
 
 #endif

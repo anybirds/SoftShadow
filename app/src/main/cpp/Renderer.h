@@ -26,6 +26,7 @@ public:
     void SetMesh(Mesh *mesh) { this->mesh = mesh; }
 
     friend class Camera;
+    friend class Light;
 };
 
 #endif

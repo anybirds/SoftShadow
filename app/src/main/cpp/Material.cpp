@@ -1,5 +1,6 @@
 #include "NDKHelper.h"
 
+#include "Light.h"
 #include "Material.h"
 #include "Shader.h"
 #include "Texture.h"
@@ -18,6 +19,13 @@ Material::Material(Shader *vertexShader, Shader *fragmentShader) : vertexShader(
     glAttachShader(program, vertexShader->id);
     glAttachShader(program, fragmentShader->id);
     glLinkProgram(program);
+
+    // sampler uniform values
+    glUseProgram(program);
+    GLint location = glGetUniformLocation(program, "_MAIN_TEX");
+    glUniform1i(location, 0);
+    location = glGetUniformLocation(program, "_SHADOW_MAP");
+    glUniform1i(location, 1);
 }
 
 Material::~Material() {
@@ -184,11 +192,8 @@ void Material::SetMatrixArray(const char *name, const mat4 *value, int length) {
 }
 
 void Material::UseTextures() {
-    glUseProgram(program);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, mainTexture->id);
-
-    // sampler uniform values
-    GLint location = glGetUniformLocation(program, "_MAIN_TEX");
-    glUniform1i(location, 0);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, Light::GetMainLight()->shadowMap);
 }

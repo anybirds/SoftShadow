@@ -1,3 +1,5 @@
+#include <EGL/egl.h>
+
 #include "Camera.h"
 #include "GameObject.h"
 #include "Light.h"
@@ -6,7 +8,11 @@
 #include "Renderer.h"
 #include "Transform.h"
 
+#include "NDKHelper.h"
+
 using namespace glm;
+
+extern EGLint width, height;
 
 Camera *Camera::mainCamera;
 
@@ -27,7 +33,14 @@ Camera::~Camera() {
 }
 
 void Camera::Render() {
+    Light *light = Light::GetMainLight();
+    light->RenderShadowMap();
+
+    glViewport(0, 0, width, height);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
     glClearColor((GLclampf) 0.0f, (GLclampf) 0.0f, (GLclampf) 0.0f, (GLclampf) 0.0f);
+    glClearDepthf(1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // render setting
@@ -55,8 +68,6 @@ void Camera::Render() {
         glUseProgram(material->program);
         material->UseTextures();
 
-        GLuint location;
-
         mat4 _MODEL = rend->GetGameObject()->GetTransform()->GetLocalToWorldMatrix();
         mat4 _CAM = GetGameObject()->GetTransform()->GetLocalToWorldMatrix();
         mat4 _NORM = normalization;
@@ -71,13 +82,15 @@ void Camera::Render() {
         material->SetMatrix("_NVM", _NVM);
         material->SetMatrix("_MVP", _MVP);
 
-        Light *light = Light::GetMainLight();
         material->SetVector("_LIGHT._AMBIENT", light->ambient);
         material->SetVector("_LIGHT._DIFFUSE", light->diffuse);
         material->SetVector("_LIGHT._SPECULAR", light->specular);
         mat3 _LIGHT_ORIENTATION = toMat3(light->GetGameObject()->GetTransform()->GetRotation());
         vec3 _LIGHT_DIR = _LIGHT_ORIENTATION[2];
         material->SetVector("_LIGHT._DIR", _LIGHT_DIR);
+        mat4 _LIGHT = light->GetGameObject()->GetTransform()->GetLocalToWorldMatrix();
+        mat4 _LIGHT_WLP = light->normalization * inverse(_LIGHT);
+        material->SetMatrix("_LIGHT._WLP", _LIGHT_WLP);
 
         if (!mesh->icnt) {
             // mesh without EBO

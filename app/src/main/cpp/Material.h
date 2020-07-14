@@ -48,6 +48,7 @@ public:
     void UseTextures();
 
     friend class Camera;
+    friend class Light;
 };
 
 #endif
