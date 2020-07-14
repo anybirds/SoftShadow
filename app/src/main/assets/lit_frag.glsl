@@ -24,19 +24,23 @@ uniform float _SHININESS;
 
 out vec4 _FRAG_COLOR;
 
-float visibility() {
+float visibility(vec3 N, vec3 L) {
     vec4 _LIGHT_FRAG_POS = _LIGHT._WLP * vec4(_FRAG_POS, 1.0);
     vec3 _NORM_FRAG_POS = _LIGHT_FRAG_POS.xyz / _LIGHT_FRAG_POS.w;
-    vec2 uv = _NORM_FRAG_POS.xy * 0.5 + 0.5;
-    float blocker = texture(_SHADOW_MAP, uv).r;
     float receiver = _NORM_FRAG_POS.z * 0.5 + 0.5;
-
-    float bias = max(0.0001 * (1.0 - dot(_FRAG_NORM, _LIGHT._DIR)), 0.000025);
-    if (blocker + bias < receiver) {
-        return 0.0;
-    } else {
-        return 1.0;
+    vec2 uv = _NORM_FRAG_POS.xy * 0.5 + 0.5;
+    float bias = max(0.0001 * (1.0 - dot(N, L)), 0.000025);
+    float ret = 0.0f;
+    for (int i=-1; i<=1; i++) {
+        for (int j=-1; j<=1; j++) {
+            vec2 tsize = vec2(1.0) / vec2(textureSize(_SHADOW_MAP, 0));
+            float blocker = texture(_SHADOW_MAP, uv + vec2(i, j) * tsize).r;
+            if (blocker + bias >= receiver) {
+                ret += 1.0f;
+            }
+        }
     }
+    return ret / 9.0f;
 }
 
 void main() {
@@ -47,7 +51,7 @@ void main() {
 
     vec3 I = clamp(
     _LIGHT._AMBIENT * _AMBIENT +
-    visibility() * (
+    visibility(N, L) * (
     _LIGHT._DIFFUSE * _DIFFUSE * dot(N, L) +
     _LIGHT._SPECULAR * _SPECULAR * max(0.0, pow(dot(N, H), _SHININESS))
     ),
