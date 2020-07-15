@@ -56,5 +56,8 @@ void main() {
     _LIGHT._SPECULAR * _SPECULAR * max(0.0, pow(dot(N, H), _SHININESS))
     ),
     0.0, 1.0);
-    _FRAG_COLOR = texture(_MAIN_TEX, _FRAG_UV) * vec4(I, 1.0);
+    float r = 50.0 * textureLod(_MAIN_TEX, _FRAG_UV, 5.0).r;
+    float g = 50.0 * textureLod(_MAIN_TEX, _FRAG_UV, 5.0).g;
+    _FRAG_COLOR = vec4(r, g, 0.0, 1.0) * vec4(I, 1.0);
+    //_FRAG_COLOR = texture(_MAIN_TEX, _FRAG_UV) * vec4(I, 1.0);
 }

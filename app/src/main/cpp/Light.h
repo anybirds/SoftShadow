@@ -7,21 +7,35 @@
 
 #include "Component.h"
 
+#define SHADOW_MAP_WIDTH 1024
+#define SHADOW_MAP_HEIGHT 1024
+#define HSM_MAX_LEVEL 8
+#define LIGHT_SIZE 5.0f
+
 class Material;
+class Shader;
 
 class Light : public Component {
 private:
     static Light *mainLight;
+    static Shader *shadowMapVertexShader;
+    static Shader *shadowMapFragmentShader;
     static Material *shadowMapMaterial;
+
+    static Shader *hsmVertexShader;
+    static Shader *hsmFragmentShader;
+    static Shader *hsmBaseFragmentShader;
+    static Material *hsmMaterial;
+    static Material *hsmBaseMaterial;
+    static GLuint emptyVao;
 
 public:
     static Light *GetMainLight() { return mainLight; }
     static void SetMainLight(Light *mainLight) { Light::mainLight = mainLight; }
-    static Material *GetShadowMapMaterial() { return shadowMapMaterial; }
-    static void SetShadowMapMaterial(Material *shadowMapMaterial) { Light::shadowMapMaterial = shadowMapMaterial; }
+    static void Init();
 
-private:
-    GLuint fbo;
+public:
+    GLuint shadowMapFBO;
     GLuint shadowMap;
     glm::mat4 normalization;
 
@@ -29,11 +43,15 @@ private:
     glm::vec3 diffuse;
     glm::vec3 specular;
 
+    GLuint hsmFBO[HSM_MAX_LEVEL];
+    GLuint hsm;
+
 public:
     Light(const glm::vec3 &ambient, const glm::vec3 &diffuse, const glm::vec3 &specular);
     virtual ~Light();
 
     void RenderShadowMap();
+    void RenderHSM();
 
     friend class Camera;
     friend class Material;

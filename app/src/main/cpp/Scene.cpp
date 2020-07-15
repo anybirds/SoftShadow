@@ -39,7 +39,7 @@ Scene::Scene() {
     tileMaterial->SetVector("_SPECULAR", vec3(1.0f));
     tileMaterial->SetFloat("_SHININESS", 25.0f);
 
-    mainCameraGameObject = new GameObject(vec3(0.0f, 5.0f, 5.0f), quat(radians(vec3(-30.0f, 0.0f, 0.0f))), vec3(1.0f));
+    mainCameraGameObject = new GameObject(vec3(0.0f, 10.0f, 0.0f), quat(radians(vec3(-90.0f, 0.0f, 0.0f))), vec3(1.0f));
     mainCameraCamera = new Camera(perspective(radians(60.0f), (float)width / (float)height, 0.1f, 1000.0f));
     mainCameraGameObject->AddComponent<Camera>(mainCameraCamera);
     Camera::SetMainCamera(mainCameraCamera);
@@ -51,7 +51,7 @@ Scene::Scene() {
     girlRenderer->SetMesh(girlMesh);
     girlRotateScript = new RotateScript();
     girlGameObject->AddComponent<RotateScript>(girlRotateScript);
-    tileGameObject = new GameObject(vec3(0.0f), quat(mat4(1.0f)), vec3(5.0f));
+    tileGameObject = new GameObject(vec3(0.0f), quat(mat4(1.0f)), vec3(2.0f));
     tileRenderer = new Renderer(tileMaterial, tileMesh);
     tileGameObject->AddComponent<Renderer>(tileRenderer);
     tileRenderer->SetMaterial(tileMaterial);
@@ -64,10 +64,7 @@ Scene::Scene() {
     lightGameObject->AddComponent<Light>(lightLight);
     Light::SetMainLight(lightLight);
 
-    shadowMapVertexShader = new Shader("shadow_map_vert.glsl", GL_VERTEX_SHADER);
-    shadowMapFragmentShader = new Shader("shadow_map_frag.glsl", GL_FRAGMENT_SHADER);
-    shadowMapMaterial = new Material(shadowMapVertexShader, shadowMapFragmentShader);
-    Light::SetShadowMapMaterial(shadowMapMaterial);
+    tileTexture->id = Light::GetMainLight()->hsm;
 }
 
 Scene::~Scene() {

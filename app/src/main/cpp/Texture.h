@@ -6,9 +6,7 @@
 #include <GLES3/gl3.h>
 
 class Texture {
-private:
-    std::string path;
-
+public:
     GLuint id;
 
 public:

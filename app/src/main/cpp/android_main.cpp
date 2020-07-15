@@ -9,6 +9,7 @@
 #define HELPER_CLASS_NAME "com/example/softshadow/NDKHelper"
 
 #include "Camera.h"
+#include "Light.h"
 #include "Scene.h"
 #include "Script.h"
 #include "Time.h"
@@ -64,6 +65,8 @@ bool init_display(struct android_app *app) {
     }
 
     Time::Init();
+    Light::Init();
+
     Script::Start();
 
     // create the pre-defined scene
