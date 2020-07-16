@@ -43,7 +43,7 @@ void Light::Init() {
     hsmBaseMaterial->SetInteger("_SHADOW_MAP", 0);
 }
 
-Light::Light(const vec3 &ambient, const vec3 &diffuse, const vec3 &specular) : ambient(ambient), diffuse(diffuse), specular(specular) {
+Light::Light(const vec3 &ambient, const vec3 &diffuse, const vec3 &specular, const vec2 &area) : ambient(ambient), diffuse(diffuse), specular(specular), area(area) {
     // generate shadow map framebuffer
     glGenFramebuffers(1, &shadowMapFBO);
 
@@ -88,7 +88,7 @@ Light::Light(const vec3 &ambient, const vec3 &diffuse, const vec3 &specular) : a
 
     // set normalization matrix
     float ratio = (float)SHADOW_MAP_WIDTH / (float)SHADOW_MAP_HEIGHT;
-    normalization = ortho(-ratio * LIGHT_SIZE, ratio * LIGHT_SIZE, -LIGHT_SIZE, LIGHT_SIZE, 0.1f, 1000.0f);
+    normalization = ortho(-ratio * LIGHT_SIZE, ratio * LIGHT_SIZE, -LIGHT_SIZE, LIGHT_SIZE, 0.0f, 1000.0f);
 }
 
 Light::~Light() {

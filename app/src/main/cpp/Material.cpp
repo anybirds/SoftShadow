@@ -155,6 +155,12 @@ void Material::SetFloatArray(const char *name, const float *value, int length) {
     glUniform1fv(location, length, value);
 }
 
+void Material::SetVector(const char *name, const vec2 &value) {
+    glUseProgram(program);
+    GLint location = glGetUniformLocation(program, name);
+    glUniform2fv(location, 1, (const GLfloat *)&value);
+}
+
 void Material::SetVector(const char *name, const vec3 &value) {
     glUseProgram(program);
     GLint location = glGetUniformLocation(program, name);
@@ -165,6 +171,12 @@ void Material::SetVector(const char *name, const vec4 &value) {
     glUseProgram(program);
     GLint location = glGetUniformLocation(program, name);
     glUniform4fv(location, 1, (const GLfloat *)&value);
+}
+
+void Material::SetVectorArray(const char *name, const vec2 *value, int length) {
+    glUseProgram(program);
+    GLint location = glGetUniformLocation(program, name);
+    glUniform2fv(location, length, (const GLfloat *)value);
 }
 
 void Material::SetVectorArray(const char *name, const vec3 *value, int length) {

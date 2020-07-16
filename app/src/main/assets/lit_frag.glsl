@@ -7,6 +7,8 @@ struct Light {
     vec3 _SPECULAR;
     mat4 _WLP; // World Light Projection
     vec3 _DIR;
+    vec2 _AREA; // area light width and height in normalized light space
+    // float _NEAR;
 };
 
 in vec3 _FRAG_POS;
@@ -24,23 +26,61 @@ uniform float _SHININESS;
 
 out vec4 _FRAG_COLOR;
 
-float visibility(vec3 N, vec3 L) {
+float BlockerSearch(float receiver, vec2 uv, vec2 tsize) {
+    // vec2 area = (1.0 - _LIGHT._NEAR / receiver) * _LIGHT._AREA;
+    ivec2 kernel = ivec2(ceil(_LIGHT._AREA / tsize));
+    float zsum = 0.0;
+    float cnt = 0.0;
+    vec2 UV = uv - (vec2(kernel) - vec2(1.0)) * tsize * 0.5;
+    for (int i=0; i<kernel.x; i++) {
+        for (int j=0; j<kernel.y; j++) {
+            float blocker = texture(_SHADOW_MAP, UV + vec2(i, j) * tsize).r;
+            if (blocker < receiver) {
+                zsum += blocker;
+                cnt += 1.0;
+            }
+        }
+    }
+    return (cnt == 0.0) ? receiver : zsum / cnt;
+}
+
+float Visibility(vec3 N, vec3 L) {
     vec4 _LIGHT_FRAG_POS = _LIGHT._WLP * vec4(_FRAG_POS, 1.0);
     vec3 _NORM_FRAG_POS = _LIGHT_FRAG_POS.xyz / _LIGHT_FRAG_POS.w;
     float receiver = _NORM_FRAG_POS.z * 0.5 + 0.5;
     vec2 uv = _NORM_FRAG_POS.xy * 0.5 + 0.5;
     float bias = max(0.0001 * (1.0 - dot(N, L)), 0.000025);
-    float ret = 0.0f;
-    for (int i=-1; i<=1; i++) {
-        for (int j=-1; j<=1; j++) {
-            vec2 tsize = vec2(1.0) / vec2(textureSize(_SHADOW_MAP, 0));
-            float blocker = texture(_SHADOW_MAP, uv + vec2(i, j) * tsize).r;
+    vec2 tsize = vec2(1.0) / vec2(textureSize(_SHADOW_MAP, 0));
+
+    // PCSS
+    float zavg = BlockerSearch(receiver, uv, tsize);
+    vec2 penumbra = ((receiver / zavg) - 1.0) * _LIGHT._AREA;
+    // vec2 filter = _LIGHT._NEAR / receiver * penumbra;
+    ivec2 kernel = ivec2(max(vec2(1.0), ceil(penumbra / tsize)));
+    vec2 UV = uv - (vec2(kernel) - vec2(1.0)) * tsize * 0.5;
+    float ret = 0.0;
+    for (int i=0; i<kernel.x; i++) {
+        for (int j=0; j<kernel.y; j++) {
+            float blocker = texture(_SHADOW_MAP, UV + vec2(i, j) * tsize).r;
             if (blocker + bias >= receiver) {
-                ret += 1.0f;
+                ret += 1.0;
             }
         }
     }
-    return ret / 9.0f;
+    return ret / float(kernel.x * kernel.y);
+    /*
+    // PCF
+    float ret = 0.0;
+    for (int i=-1; i<=1; i++) {
+        for (int j=-1; j<=1; j++) {
+            float blocker = texture(_SHADOW_MAP, uv + vec2(i, j) * tsize).r;
+            if (blocker + bias >= receiver) {
+                ret += 1.0;
+            }
+        }
+    }
+    return ret / 9.0;
+    */
 }
 
 void main() {
@@ -51,13 +91,10 @@ void main() {
 
     vec3 I = clamp(
     _LIGHT._AMBIENT * _AMBIENT +
-    visibility(N, L) * (
+    Visibility(N, L) * (
     _LIGHT._DIFFUSE * _DIFFUSE * dot(N, L) +
     _LIGHT._SPECULAR * _SPECULAR * max(0.0, pow(dot(N, H), _SHININESS))
     ),
     0.0, 1.0);
-    float r = 50.0 * textureLod(_MAIN_TEX, _FRAG_UV, 5.0).r;
-    float g = 50.0 * textureLod(_MAIN_TEX, _FRAG_UV, 5.0).g;
-    _FRAG_COLOR = vec4(r, g, 0.0, 1.0) * vec4(I, 1.0);
-    //_FRAG_COLOR = texture(_MAIN_TEX, _FRAG_UV) * vec4(I, 1.0);
+    _FRAG_COLOR = texture(_MAIN_TEX, _FRAG_UV) * vec4(I, 1.0);
 }

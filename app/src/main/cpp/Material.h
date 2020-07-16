@@ -38,8 +38,10 @@ public:
     void SetIntegerArray(const char *name, const int *value, int length);
     void SetFloat(const char *name, float value);
     void SetFloatArray(const char *name, const float *value, int length);
+    void SetVector(const char *name, const glm::vec2 &value);
     void SetVector(const char *name, const glm::vec3 &value);
     void SetVector(const char *name, const glm::vec4 &value);
+    void SetVectorArray(const char *name, const glm::vec2 *value, int length);
     void SetVectorArray(const char *name, const glm::vec3 *value, int length);
     void SetVectorArray(const char *name, const glm::vec4 *value, int length);
     void SetMatrix(const char *name, const glm::mat4 &value);

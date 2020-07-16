@@ -86,6 +86,7 @@ void Camera::Render() {
         material->SetVector("_LIGHT._AMBIENT", light->ambient);
         material->SetVector("_LIGHT._DIFFUSE", light->diffuse);
         material->SetVector("_LIGHT._SPECULAR", light->specular);
+        material->SetVector("_LIGHT._AREA", light->area);
         mat3 _LIGHT_ORIENTATION = toMat3(light->GetGameObject()->GetTransform()->GetRotation());
         vec3 _LIGHT_DIR = _LIGHT_ORIENTATION[2];
         material->SetVector("_LIGHT._DIR", _LIGHT_DIR);

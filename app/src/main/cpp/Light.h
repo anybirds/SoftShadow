@@ -34,20 +34,23 @@ public:
     static void SetMainLight(Light *mainLight) { Light::mainLight = mainLight; }
     static void Init();
 
-public:
+private:
     GLuint shadowMapFBO;
     GLuint shadowMap;
+
+    GLuint hsmFBO[HSM_MAX_LEVEL];
+    GLuint hsm;
+
     glm::mat4 normalization;
 
     glm::vec3 ambient;
     glm::vec3 diffuse;
     glm::vec3 specular;
 
-    GLuint hsmFBO[HSM_MAX_LEVEL];
-    GLuint hsm;
+    glm::vec2 area;
 
 public:
-    Light(const glm::vec3 &ambient, const glm::vec3 &diffuse, const glm::vec3 &specular);
+    Light(const glm::vec3 &ambient, const glm::vec3 &diffuse, const glm::vec3 &specular, const glm::vec2 &area);
     virtual ~Light();
 
     void RenderShadowMap();
