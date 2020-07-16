@@ -49,7 +49,7 @@ float Visibility(vec3 N, vec3 L) {
     vec3 _NORM_FRAG_POS = _LIGHT_FRAG_POS.xyz / _LIGHT_FRAG_POS.w;
     float receiver = _NORM_FRAG_POS.z * 0.5 + 0.5;
     vec2 uv = _NORM_FRAG_POS.xy * 0.5 + 0.5;
-    float bias = max(0.0001 * (1.0 - dot(N, L)), 0.000025);
+    float bias = max(0.00025 * (1.0 - dot(N, L)), 0.0001);
     vec2 tsize = vec2(1.0) / vec2(textureSize(_SHADOW_MAP, 0));
 
     // PCSS

@@ -1,4 +1,5 @@
 #include <EGL/egl.h>
+#include <glm/gtx/rotate_vector.hpp>
 
 #include "Camera.h"
 #include "GameObject.h"
@@ -39,7 +40,7 @@ Scene::Scene() {
     tileMaterial->SetVector("_SPECULAR", vec3(1.0f));
     tileMaterial->SetFloat("_SHININESS", 25.0f);
 
-    mainCameraGameObject = new GameObject(vec3(0.0f, 20.0f, 0.0f), quat(radians(vec3(-90.0f, 0.0f, 0.0f))), vec3(1.0f));
+    mainCameraGameObject = new GameObject(vec3(0.0f, 15.0f, 0.0f), quat(radians(vec3(-90.0f, 0.0f, 0.0f))), vec3(1.0f));
     mainCameraCamera = new Camera(perspective(radians(60.0f), (float)width / (float)height, 0.1f, 1000.0f));
     mainCameraGameObject->AddComponent<Camera>(mainCameraCamera);
     Camera::SetMainCamera(mainCameraCamera);
@@ -57,10 +58,15 @@ Scene::Scene() {
     tileRenderer->SetMaterial(tileMaterial);
     tileRenderer->SetMesh(tileMesh);
 
-    quat lightRotation = rotate(quat(mat4(1.0f)), radians(45.0f), vec3(0.0f, 0.0f, 1.0f));
-    lightRotation = rotate(lightRotation, radians(45.0f), vec3(0.0f, 1.0f, 0.0f));
+    quat lightRotation = rotate(quat(mat4(1.0f)), radians(45.0f), vec3(0.0f, 1.0f, 0.0f));
+    lightRotation = rotate(lightRotation, radians(-45.0f), vec3(1.0f, 0.0f, 0.0f));
+    // quat lightRotation = rotate(quat(mat4(1.0f)), radians(-45.0f), vec3(1.0f, 0.0f, 0.0f));
+    /*
+    quat lightRotation = rotate(quat(mat4(1.0f)), radians(90.0f), vec3(0.0f, 1.0f, 0.0f));
+    lightRotation = rotate(lightRotation, radians(-45.0f), vec3(1.0f, 0.0f, 0.0f));
+     */
     lightGameObject = new GameObject(vec3(10.0f), lightRotation, vec3(1.0f));
-    lightLight = new Light(vec3(0.2f), vec3(1.0f), vec3(1.0f, 1.0f, 1.0f), vec2(0.01f, 0.04f));
+    lightLight = new Light(vec3(0.2f), vec3(1.0f), vec3(1.0f), vec2(0.02f));
     lightGameObject->AddComponent<Light>(lightLight);
     Light::SetMainLight(lightLight);
 }

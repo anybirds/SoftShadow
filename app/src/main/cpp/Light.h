@@ -7,10 +7,10 @@
 
 #include "Component.h"
 
-#define SHADOW_MAP_WIDTH 1024
-#define SHADOW_MAP_HEIGHT 1024
+#define SHADOW_MAP_WIDTH 2048
+#define SHADOW_MAP_HEIGHT 2048
 #define HSM_MAX_LEVEL 8
-#define LIGHT_SIZE 5.0f
+#define LIGHT_SIZE 10.0f
 
 class Material;
 class Shader;
