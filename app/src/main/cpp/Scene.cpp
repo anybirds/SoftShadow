@@ -66,7 +66,7 @@ Scene::Scene() {
     lightRotation = rotate(lightRotation, radians(-45.0f), vec3(1.0f, 0.0f, 0.0f));
      */
     lightGameObject = new GameObject(vec3(10.0f), lightRotation, vec3(1.0f));
-    lightLight = new Light(vec3(0.2f), vec3(1.0f), vec3(1.0f), vec2(0.02f));
+    lightLight = new Light(vec3(0.2f), vec3(1.0f), vec3(1.0f), vec2(0.01f));
     lightGameObject->AddComponent<Light>(lightLight);
     Light::SetMainLight(lightLight);
 }

@@ -18,6 +18,7 @@ in vec2 _FRAG_UV;
 uniform mat4 _CAM;
 uniform sampler2D _MAIN_TEX;
 uniform sampler2D _SHADOW_MAP;
+uniform sampler2D _HSM;
 uniform Light _LIGHT;
 uniform vec3 _AMBIENT;
 uniform vec3 _DIFFUSE;
@@ -26,9 +27,30 @@ uniform float _SHININESS;
 
 out vec4 _FRAG_COLOR;
 
-float BlockerSearch(float receiver, vec2 uv, vec2 tsize) {
+vec2 SearchArea(float receiver, vec2 uv, vec2 tsize) {
+    vec2 area = _LIGHT._AREA;
+    float level = ceil(log2(max(area.x / tsize.x, area.y / tsize.y))) + 1.0; // need to clamp between 0 ~ HSM_MAX_LEVEL
+    float minDepth = textureLod(_HSM, uv, level).r;
+    area = (minDepth / receiver) * area;
+
+    /*
+    for (;;) {
+        float level = ceil(log2(max(area.x / tsize.x, area.y / tsize.y))); // need to clamp between 0 ~ HSM_MAX_LEVEL
+        float minDepth = textureLod(_HSM, uv, level).r;
+        vec2 nextArea = (minDepth / receiver) * area;
+        if (area == nextArea) {
+            break;
+        }
+        area = nextArea;
+    }
+    */
+    return area;
+}
+
+float BlockerSearch(ivec2 kernel, float receiver, vec2 uv, vec2 tsize) {
     // vec2 area = (1.0 - _LIGHT._NEAR / receiver) * _LIGHT._AREA;
-    ivec2 kernel = ivec2(ceil(_LIGHT._AREA / tsize));
+    // ivec2 kernel = ivec2(ceil(SearchArea(receiver, uv, tsize) / tsize));
+
     float zsum = 0.0;
     float cnt = 0.0;
     vec2 UV = uv - (vec2(kernel) - vec2(1.0)) * tsize * 0.5;
@@ -52,22 +74,32 @@ float Visibility(vec3 N, vec3 L) {
     float bias = max(0.00025 * (1.0 - dot(N, L)), 0.0001);
     vec2 tsize = vec2(1.0) / vec2(textureSize(_SHADOW_MAP, 0));
 
+    vec2 area = _LIGHT._AREA;
+    ivec2 kernel = ivec2(ceil(area / tsize));
+    float level = ceil(log2(max(area.x / tsize.x, area.y / tsize.y))); // need to clamp between 0 ~ HSM_MAX_LEVEL
+    vec2 depth = vec2(textureLod(_HSM, uv, level));
+    // how to remove branch?
+    if (receiver > depth.y + bias) {
+        return 0.0;
+    } else {
     // PCSS
-    float zavg = BlockerSearch(receiver, uv, tsize);
-    vec2 penumbra = ((receiver / zavg) - 1.0) * _LIGHT._AREA;
-    // vec2 filter = _LIGHT._NEAR / receiver * penumbra;
-    ivec2 kernel = ivec2(max(vec2(1.0), ceil(penumbra / tsize)));
-    vec2 UV = uv - (vec2(kernel) - vec2(1.0)) * tsize * 0.5;
-    float ret = 0.0;
-    for (int i=0; i<kernel.x; i++) {
-        for (int j=0; j<kernel.y; j++) {
-            float blocker = texture(_SHADOW_MAP, UV + vec2(i, j) * tsize).r;
-            if (blocker + bias >= receiver) {
-                ret += 1.0;
+        float zavg = BlockerSearch(kernel, receiver, uv, tsize);
+        vec2 penumbra = ((receiver / zavg) - 1.0) * _LIGHT._AREA;
+        // vec2 filter = _LIGHT._NEAR / receiver * penumbra;
+        ivec2 kernel = ivec2(max(vec2(1.0), ceil(penumbra / tsize)));
+        vec2 UV = uv - (vec2(kernel) - vec2(1.0)) * tsize * 0.5;
+        float ret = 0.0;
+        for (int i=0; i<kernel.x; i++) {
+            for (int j=0; j<kernel.y; j++) {
+                float blocker = texture(_SHADOW_MAP, UV + vec2(i, j) * tsize).r;
+                if (blocker + bias >= receiver) {
+                    ret += 1.0;
+                }
             }
         }
+        return ret / float(kernel.x * kernel.y);
     }
-    return ret / float(kernel.x * kernel.y);
+
     /*
     // PCF
     float ret = 0.0;
@@ -96,5 +128,6 @@ void main() {
     _LIGHT._SPECULAR * _SPECULAR * max(0.0, pow(dot(N, H), _SHININESS))
     ),
     0.0, 1.0);
+
     _FRAG_COLOR = texture(_MAIN_TEX, _FRAG_UV) * vec4(I, 1.0);
 }

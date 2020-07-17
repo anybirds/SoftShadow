@@ -62,13 +62,14 @@ Light::Light(const vec3 &ambient, const vec3 &diffuse, const vec3 &specular, con
     // generate hsm texture
     glGenTextures(1, &hsm);
     glBindTexture(GL_TEXTURE_2D, hsm);
-    for (int i=0; i<=HSM_MAX_LEVEL; i++) {
-        glTexImage2D(GL_TEXTURE_2D, i, GL_RG16F, SHADOW_MAP_WIDTH >> i, SHADOW_MAP_HEIGHT >> i, 0, GL_RG, GL_FLOAT, NULL);
-    }
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, HSM_MAX_LEVEL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    for (int i=0; i<=HSM_MAX_LEVEL; i++) {
+        glTexImage2D(GL_TEXTURE_2D, i, GL_RG16F, SHADOW_MAP_WIDTH >> i, SHADOW_MAP_HEIGHT >> i, 0, GL_RG, GL_FLOAT, NULL);
+    }
 
     // attach shadow map texture to framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
@@ -175,6 +176,7 @@ void Light::RenderHSM() {
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
     // render hsm
+    glBindTexture(GL_TEXTURE_2D, hsm);
     for (int i=1; i<=HSM_MAX_LEVEL; i++) {
         glViewport(0, 0, SHADOW_MAP_WIDTH >> i, SHADOW_MAP_HEIGHT >> i);
         glBindFramebuffer(GL_FRAMEBUFFER, hsmFBO[i]);

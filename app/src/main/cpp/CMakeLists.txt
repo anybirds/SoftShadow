@@ -8,6 +8,14 @@ set(NDKHelperDir ${LibsDir}/NDKHelper)
 set(NDKHelperSrcDir ${NDKHelperDir}/cpp)
 set(AssimpDir ${LibsDir}/assimp)
 
+if ((NOT EXISTS ${LibsDir}/glm) OR
+(NOT EXISTS ${LibsDir}/glm/glm/glm.h))
+    execute_process(COMMAND git clone
+            https://github.com/g-truc/glm
+            glm
+            WORKING_DIRECTORY ${LibsDir})
+endif()
+
 # build the ndk-helper library
 add_subdirectory( ${NDKHelperSrcDir}
         ${NDKHelperDir}/build/${CMAKE_BUILD_TYPE}/${ANDROID_ABI})

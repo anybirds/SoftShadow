@@ -26,6 +26,8 @@ Material::Material(Shader *vertexShader, Shader *fragmentShader) : vertexShader(
     glUniform1i(location, 0);
     location = glGetUniformLocation(program, "_SHADOW_MAP");
     glUniform1i(location, 1);
+    location = glGetUniformLocation(program, "_HSM");
+    glUniform1i(location, 2);
 }
 
 Material::~Material() {
@@ -208,4 +210,6 @@ void Material::UseTextures() {
     glBindTexture(GL_TEXTURE_2D, mainTexture->id);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, Light::GetMainLight()->shadowMap);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, Light::GetMainLight()->hsm);
 }

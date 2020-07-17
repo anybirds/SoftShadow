@@ -6,7 +6,7 @@
 #include <GLES3/gl3.h>
 
 class Texture {
-public:
+private:
     GLuint id;
 
 public:
