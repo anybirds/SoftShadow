@@ -19,6 +19,7 @@ uniform mat4 _CAM;
 uniform sampler2D _MAIN_TEX;
 uniform sampler2D _SHADOW_MAP;
 uniform sampler2D _HSM;
+uniform sampler2D _VSM;
 uniform Light _LIGHT;
 uniform vec3 _AMBIENT;
 uniform vec3 _DIFFUSE;
@@ -116,6 +117,7 @@ float Visibility(vec3 N, vec3 L) {
 }
 
 void main() {
+    /*
     vec3 N = normalize(_FRAG_NORM);
     vec3 L = normalize(_LIGHT._DIR);
     vec3 V = normalize(vec3(_CAM[3]) - _FRAG_POS);
@@ -128,6 +130,9 @@ void main() {
     _LIGHT._SPECULAR * _SPECULAR * max(0.0, pow(dot(N, H), _SHININESS))
     ),
     0.0, 1.0);
+    */
 
-    _FRAG_COLOR = texture(_MAIN_TEX, _FRAG_UV) * vec4(I, 1.0);
+    _FRAG_COLOR = vec4(texture(_VSM, _FRAG_UV).r / 50000.0, texture(_VSM, _FRAG_UV).g / 50000.0, 0.0, 1.0);
+
+    // _FRAG_COLOR = texture(_MAIN_TEX, _FRAG_UV) * vec4(I, 1.0);
 }
