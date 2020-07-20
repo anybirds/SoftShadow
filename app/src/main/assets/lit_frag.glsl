@@ -119,7 +119,7 @@ float Visibility(vec3 N, vec3 L) {
 void main() {
     /*
     vec3 N = normalize(_FRAG_NORM);
-    vec3 L = normalize(_LIGHT._DIR);
+    vec3 L = normalize( _LIGHT._DIR);
     vec3 V = normalize(vec3(_CAM[3]) - _FRAG_POS);
     vec3 H = normalize(V + L);
 
@@ -132,7 +132,8 @@ void main() {
     0.0, 1.0);
     */
 
-    _FRAG_COLOR = vec4(texture(_VSM, _FRAG_UV).r / 50000.0, texture(_VSM, _FRAG_UV).g / 50000.0, 0.0, 1.0);
+    vec4 temp = texture(_VSM, _FRAG_UV) * 0.1 * 0.1 * 0.1 * 0.1;
+    _FRAG_COLOR = vec4(temp.r, 0.0, 0.0, 1.0);
 
     // _FRAG_COLOR = texture(_MAIN_TEX, _FRAG_UV) * vec4(I, 1.0);
 }

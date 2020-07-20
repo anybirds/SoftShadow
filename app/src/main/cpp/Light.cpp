@@ -100,7 +100,7 @@ Light::Light(const vec3 &ambient, const vec3 &diffuse, const vec3 &specular, con
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); // no GL_CLAMP_TO_BORDER defined, need to implement in fragment shader
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, SHADOW_MAP_WIDTH, SHADOW_MAP_HEIGHT, 0, GL_RG, GL_FLOAT, NULL); // clamp to [0, 1] does not occur in the fragment shader with this format
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, SHADOW_MAP_WIDTH + 2, SHADOW_MAP_HEIGHT + 2, 0, GL_RG, GL_FLOAT, NULL); // clamp to [0, 1] does not occur in the fragment shader with this format
     }
 
     // attach shadow map texture to framebuffer
@@ -232,7 +232,7 @@ void Light::RenderHSM() {
 
 void Light::RenderVSM() {
     // render vsm base
-    glViewport(0, 0, SHADOW_MAP_WIDTH, SHADOW_MAP_HEIGHT);
+    glViewport(0, 0, SHADOW_MAP_WIDTH + 2, SHADOW_MAP_HEIGHT + 2);
     glBindFramebuffer(GL_FRAMEBUFFER, vsmFBO[0]);
     glClearColor((GLclampf) 0.0f, (GLclampf) 0.0f, (GLclampf) 0.0f, (GLclampf) 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -244,8 +244,8 @@ void Light::RenderVSM() {
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
     // render vsm
-    int n = (int)(ceil(log2((float)SHADOW_MAP_WIDTH) / 4.0f));
-    int m = (int)(ceil(log2((float)SHADOW_MAP_HEIGHT) / 4.0f));
+    int n = (int)(ceil(log2((float)SHADOW_MAP_WIDTH) / 5.0f));
+    int m = (int)(ceil(log2((float)SHADOW_MAP_HEIGHT) / 5.0f));
 
     for (int i=0; i<n; i++) {
         glBindFramebuffer(GL_FRAMEBUFFER, vsmFBO[(i + 1) % 2]);
@@ -255,7 +255,7 @@ void Light::RenderVSM() {
         glUseProgram(vsmMaterial->program);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, vsmTemp[i % 2]);
-        vsmMaterial->SetVector("_STRIDE", vec2(pow(16, i), 0.0f));
+        vsmMaterial->SetVector("_STRIDE", vec2(pow(32, i), 0.0f));
         glDrawArrays(GL_TRIANGLES, 0, 6);
     }
 
@@ -268,7 +268,7 @@ void Light::RenderVSM() {
         glUseProgram(vsmMaterial->program);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, vsmTemp[i % 2]);
-        vsmMaterial->SetVector("_STRIDE", vec2(0.0, pow(16, i - n)));
+        vsmMaterial->SetVector("_STRIDE", vec2(0.0, pow(32, i - n)));
         glDrawArrays(GL_TRIANGLES, 0, 6);
     }
 
