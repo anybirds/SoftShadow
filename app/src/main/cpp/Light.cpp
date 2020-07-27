@@ -61,13 +61,18 @@ void Light::Init() {
 }
 
 Light::Light(const vec3 &ambient, const vec3 &diffuse, const vec3 &specular, const vec2 &area) : ambient(ambient), diffuse(diffuse), specular(specular), area(area) {
+    GLenum err;
+    err = glGetError();
+    if (err != GL_NO_ERROR) {
+        LOGI("glerror before light : %d", err);
+    }
     // generate shadow map framebuffer
     glGenFramebuffers(1, &shadowMapFBO);
 
     // generate shadow map texture
     glGenTextures(1, &shadowMap);
     glBindTexture(GL_TEXTURE_2D, shadowMap);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, SHADOW_MAP_WIDTH, SHADOW_MAP_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, SHADOW_MAP_WIDTH, SHADOW_MAP_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_SHORT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -93,14 +98,22 @@ Light::Light(const vec3 &ambient, const vec3 &diffuse, const vec3 &specular, con
 
     // generate vsm texture
     glGenTextures(2, vsmTemp);
-
+    err = glGetError();
+    if (err != GL_NO_ERROR) {
+        LOGI("glerror before vsm : %d", err);
+    }
     for (int i=0; i<2; i++) {
         glBindTexture(GL_TEXTURE_2D, vsmTemp[i]);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); // no GL_CLAMP_TO_BORDER defined, need to implement in fragment shader
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, SHADOW_MAP_WIDTH + 2, SHADOW_MAP_HEIGHT + 2, 0, GL_RG, GL_FLOAT, NULL); // clamp to [0, 1] does not occur in the fragment shader with this format
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16I, SHADOW_MAP_WIDTH + 2, SHADOW_MAP_HEIGHT + 2, 0, GL_RGBA_INTEGER, GL_SHORT, NULL); // clamp to [0, 1] does not occur in the fragment shader with this format
+    }
+
+    err = glGetError();
+    if (err != GL_NO_ERROR) {
+        LOGI("glerror after vsm : %d", err);
     }
 
     // attach shadow map texture to framebuffer
@@ -125,7 +138,7 @@ Light::Light(const vec3 &ambient, const vec3 &diffuse, const vec3 &specular, con
 
     // set normalization matrix
     float ratio = (float)SHADOW_MAP_WIDTH / (float)SHADOW_MAP_HEIGHT;
-    normalization = ortho(-ratio * LIGHT_SIZE, ratio * LIGHT_SIZE, -LIGHT_SIZE, LIGHT_SIZE, 0.0f, 1000.0f);
+    normalization = ortho(-ratio * LIGHT_SIZE, ratio * LIGHT_SIZE, -LIGHT_SIZE, LIGHT_SIZE, 0.0f, 40.0f);
 }
 
 Light::~Light() {
@@ -226,6 +239,7 @@ void Light::RenderHSM() {
         hsmMaterial->SetInteger("_LEVEL", i - 1);
         glDrawArrays(GL_TRIANGLES, 0, 6);
     }
+
     glViewport(0, 0, width, height);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
@@ -244,18 +258,19 @@ void Light::RenderVSM() {
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
     // render vsm
-    int n = (int)(ceil(log2((float)SHADOW_MAP_WIDTH) / 5.0f));
-    int m = (int)(ceil(log2((float)SHADOW_MAP_HEIGHT) / 5.0f));
+    int n = (int)(ceil(log2((float)SHADOW_MAP_WIDTH) / 2.0f));
+    int m = (int)(ceil(log2((float)SHADOW_MAP_HEIGHT) / 2.0f));
 
     for (int i=0; i<n; i++) {
         glBindFramebuffer(GL_FRAMEBUFFER, vsmFBO[(i + 1) % 2]);
         glClearColor((GLclampf) 0.0f, (GLclampf) 0.0f, (GLclampf) 0.0f, (GLclampf) 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
+
         glBindVertexArray(emptyVao);
         glUseProgram(vsmMaterial->program);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, vsmTemp[i % 2]);
-        vsmMaterial->SetVector("_STRIDE", vec2(pow(32, i), 0.0f));
+        vsmMaterial->SetVector("_STRIDE", vec2(pow(4, i), 0.0f));
         glDrawArrays(GL_TRIANGLES, 0, 6);
     }
 
@@ -268,9 +283,61 @@ void Light::RenderVSM() {
         glUseProgram(vsmMaterial->program);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, vsmTemp[i % 2]);
-        vsmMaterial->SetVector("_STRIDE", vec2(0.0, pow(32, i - n)));
+        vsmMaterial->SetVector("_STRIDE", vec2(0.0f, pow(4, i - n)));
         glDrawArrays(GL_TRIANGLES, 0, 6);
     }
+
+    // store average depth value
+    /*
+    float sum[16];
+    glReadPixels(SHADOW_MAP_WIDTH, SHADOW_MAP_HEIGHT, SHADOW_MAP_WIDTH + 2, SHADOW_MAP_HEIGHT + 2, GL_RGBA, GL_FLOAT, sum);
+    averageDepth = sum[0] / (SHADOW_MAP_WIDTH * SHADOW_MAP_HEIGHT);
+     */
+
+    GLenum err;
+    if (err != GL_NO_ERROR) {
+        LOGI("glerror: %d", err);
+    }
+    int vsmPixels[34][34][4];
+    glReadPixels(0, 0, SHADOW_MAP_WIDTH + 2, SHADOW_MAP_HEIGHT + 2, GL_RGBA, GL_INT, vsmPixels);
+    LOGI("start");
+    for (int i=1; i<=32; i++) {
+        LOGI("%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d ",
+                vsmPixels[i][1][0],
+             vsmPixels[i][2][0],
+             vsmPixels[i][3][0],
+             vsmPixels[i][4][0],
+             vsmPixels[i][5][0],
+             vsmPixels[i][6][0],
+             vsmPixels[i][7][0],
+             vsmPixels[i][8][0],
+             vsmPixels[i][9][0],
+             vsmPixels[i][10][0],
+             vsmPixels[i][11][0],
+             vsmPixels[i][12][0],
+             vsmPixels[i][13][0],
+             vsmPixels[i][14][0],
+             vsmPixels[i][15][0],
+             vsmPixels[i][16][0],
+             vsmPixels[i][17][0],
+             vsmPixels[i][18][0],
+             vsmPixels[i][19][0],
+             vsmPixels[i][20][0],
+             vsmPixels[i][21][0],
+             vsmPixels[i][22][0],
+             vsmPixels[i][23][0],
+             vsmPixels[i][24][0],
+             vsmPixels[i][25][0],
+             vsmPixels[i][26][0],
+             vsmPixels[i][27][0],
+             vsmPixels[i][28][0],
+             vsmPixels[i][29][0],
+             vsmPixels[i][30][0],
+             vsmPixels[i][31][0],
+             vsmPixels[i][32][0]
+                );
+    }
+    LOGI("end");
 
     // store the final result as vsm
     vsm = vsmTemp[(n + m) % 2];

@@ -6,7 +6,7 @@
 
 using namespace std;
 
-char infoLog[MAX_SHADER_INFO_LOG_LENGTH];
+char shaderInfoLog[MAX_SHADER_INFO_LOG_LENGTH];
 
 Shader::Shader(const string &path, GLenum type) : path(path), type(type) {
     id = glCreateShader(type);
@@ -30,8 +30,8 @@ Shader::Shader(const string &path, GLenum type) : path(path), type(type) {
     GLint status = 0;
     glGetShaderiv(id, GL_COMPILE_STATUS, &status);
     if (status == GL_FALSE) {
-        glGetShaderInfoLog(id, MAX_SHADER_INFO_LOG_LENGTH, nullptr, infoLog);
-        LOGI("[ %s ] failed compiling shader: %s\n%s", __FUNCTION__, path.c_str(), infoLog);
+        glGetShaderInfoLog(id, MAX_SHADER_INFO_LOG_LENGTH, nullptr, shaderInfoLog);
+        LOGI("[ %s ] failed compiling shader: %s\n%s", __FUNCTION__, path.c_str(), shaderInfoLog);
         glDeleteShader(id);
         throw exception();
     }

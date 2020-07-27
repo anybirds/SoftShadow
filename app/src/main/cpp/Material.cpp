@@ -5,23 +5,47 @@
 #include "Shader.h"
 #include "Texture.h"
 
+#define MAX_PROGRAM_INFO_LOG_LENGTH 512
+
 using namespace std;
 using namespace glm;
+
+char programInfoLog[MAX_PROGRAM_INFO_LOG_LENGTH];
 
 Material::Material(Shader *vertexShader, Shader *fragmentShader) : vertexShader(vertexShader), fragmentShader(fragmentShader) {
     if (vertexShader->type != GL_VERTEX_SHADER || fragmentShader->type != GL_FRAGMENT_SHADER) {
         LOGI("[ %s ] shader type mismatch", __FUNCTION__);
         throw exception();
     }
-
+    GLenum err;
+    err = glGetError();
+    if (err != GL_NO_ERROR) {
+        LOGI("glerror before mat : %d", err);
+    }
     // attach shaders and link
     program = glCreateProgram();
     glAttachShader(program, vertexShader->id);
     glAttachShader(program, fragmentShader->id);
     glLinkProgram(program);
+    err = glGetError();
+    if (err != GL_NO_ERROR) {
+        LOGI("glerror after link : %d", err);
+    }
 
+    GLint status = 0;
+    glGetProgramiv(program, GL_LINK_STATUS, &status);
+    if (status == GL_FALSE) {
+        glGetProgramInfoLog(program, MAX_PROGRAM_INFO_LOG_LENGTH, nullptr, programInfoLog);
+        LOGI("[ %s ] failed linking program\n%s", __FUNCTION__, programInfoLog);
+        glDeleteProgram(program);
+        throw exception();
+    }
     // sampler uniform values
     glUseProgram(program);
+    err = glGetError();
+    if (err != GL_NO_ERROR) {
+        LOGI("glerror after link : %d", err);
+    }
     GLint location = glGetUniformLocation(program, "_MAIN_TEX");
     glUniform1i(location, 0);
     location = glGetUniformLocation(program, "_SHADOW_MAP");
