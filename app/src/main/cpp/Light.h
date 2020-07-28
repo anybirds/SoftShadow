@@ -7,8 +7,8 @@
 
 #include "Component.h"
 
-#define SHADOW_MAP_WIDTH 32
-#define SHADOW_MAP_HEIGHT 32
+#define SHADOW_MAP_WIDTH 1024
+#define SHADOW_MAP_HEIGHT 1024
 #define HSM_MAX_LEVEL 8
 #define LIGHT_SIZE 10.0f
 

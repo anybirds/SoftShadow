@@ -1,6 +1,6 @@
 #version 320 es
 precision highp float;
-precision highp int;
+precision highp sampler2D;
 
 struct Light {
     vec3 _AMBIENT;
@@ -18,7 +18,7 @@ in vec2 _FRAG_UV;
 
 uniform mat4 _CAM;
 uniform sampler2D _MAIN_TEX;
-uniform sampler2D _SHADOW_MAP;
+uniform highp sampler2DShadow _SHADOW_MAP;
 uniform sampler2D _HSM;
 uniform sampler2D _VSM;
 uniform Light _LIGHT;
@@ -56,19 +56,25 @@ float BlockerSearch(ivec2 kernel, float receiver, vec2 vsm_uv, vec2 vsm_tsize) {
     float zsum = 0.0;
     float cnt = 0.0;
 
-    vec2 size = vec2(kernel) * vsm_tsize * 0.5;
-    float left = vsm_uv.x - size.x;
+    vec2 size = vec2(kernel - ivec2(1)) * vsm_tsize * 0.5;
+    float left = vsm_uv.x - size.x - vsm_tsize.x;
     float right = vsm_uv.x + size.x;
-    float top = vsm_uv.y - size.y;
+    float top = vsm_uv.y - size.y - vsm_tsize.y;
     float bottom = vsm_uv.y + size.y;
 
-    vec2 avg = 100.0 * (vec2(texture(_VSM, vec2(right, bottom))) - vec2(texture(_VSM, vec2(right, top))) - vec2(texture(_VSM, vec2(left, bottom))) + vec2(texture(_VSM, vec2(left, top)))) / float(kernel.x * kernel.y);
-    float E = avg.x;
-    float V = avg.y - avg.x * avg.x;
+    vec2 avg = (vec2(texture(_VSM, vec2(right, bottom))) - vec2(texture(_VSM, vec2(right, top))) - vec2(texture(_VSM, vec2(left, bottom))) + vec2(texture(_VSM, vec2(left, top)))) / float(kernel.x * kernel.y);
+    float E = 0.8975 + avg.x;
+
+    if (abs(E - receiver) < 0.005) {
+        return receiver;
+    }
+
+    float E2 = 0.8975 + avg.y;
+    float V = max(E2 - E * E, 0.000001);
     if (receiver <= E) {
         return receiver;
     }
-    float P = V / ( V + (receiver - E) * (receiver - E));
+    float P = clamp(V / ( V + (receiver - E) * (receiver - E)), 0.0, 1.0);
     return (E - P * receiver) / (1.0 - P);
 }
 
@@ -80,10 +86,10 @@ float Visibility(vec3 N, vec3 L) {
     vec2 tsize = vec2(1.0) / vec2(textureSize(_SHADOW_MAP, 0));
     vec2 vsm_uv = uv * (vec2(textureSize(_SHADOW_MAP, 0)) / vec2(textureSize(_VSM, 0))) + vec2(1.0) / vec2(textureSize(_SHADOW_MAP, 0));
     vec2 vsm_tsize = vec2(1.0) / vec2(textureSize(_VSM, 0));
-    float bias = max(0.00025 * (1.0 - dot(N, L)), 0.0001);
+    float bias = max(0.005 * (1.0 - dot(N, L)), 0.001);
 
     vec2 area = _LIGHT._AREA;
-    ivec2 kernel = ivec2(ceil(area / tsize));
+    ivec2 kernel = ivec2(ceil(area / vsm_tsize));
     float level = ceil(log2(max(area.x / tsize.x, area.y / tsize.y))); // need to clamp between 0 ~ HSM_MAX_LEVEL
     vec2 depth = vec2(textureLod(_HSM, uv, level));
     // how to remove branch?
@@ -93,24 +99,61 @@ float Visibility(vec3 N, vec3 L) {
         // PCSS
         float zavg = BlockerSearch(kernel, receiver, vsm_uv, vsm_tsize);
         vec2 penumbra = ((receiver / zavg) - 1.0) * _LIGHT._AREA;
+        ivec2 kernel = ivec2(max(vec2(1.0), ceil(penumbra / vsm_tsize)));
+        // return float(kernel.x) / 10.0;
         // vec2 filter = _LIGHT._NEAR / receiver * penumbra;
-        ivec2 kernel = ivec2(3);
-        // ivec2 kernel = ivec2(max(vec2(1.0), ceil(penumbra / tsize)));
-        vec2 size = vec2(kernel) * vsm_tsize * 0.5;
-        float left = vsm_uv.x - size.x;
-        float right = vsm_uv.x + size.x;
-        float top = vsm_uv.y - size.y;
-        float bottom = vsm_uv.y + size.y;
+        // ivec2 kernel = ivec2(20);
+        if (abs(zavg - receiver) < 0.025) {
+            float ret = 0.0;
+            for (int i=-1; i<=1; i++) {
+                for (int j=-1; j<=1; j++) {
+                    ret += texture(_SHADOW_MAP, vec3(uv.x + float(i) * tsize.x, uv.y + float(j) * tsize.y, receiver - bias));
+/*
+                    float blocker = texture(_SHADOW_MAP, uv + vec2(i, j) * tsize).r;
+                    if (blocker + bias >= receiver) {
+                        ret += 1.0;
+                    }
+*/
+                }
+            }
+            return ret / 9.0;
+        } else if (abs(zavg - receiver) < 0.05) {
+            float ret = 0.0;
+            for (int i=-2; i<=2; i++) {
+                for (int j=-2; j<=2; j++) {
+                    ret += texture(_SHADOW_MAP, vec3(uv.x + float(i) * tsize.x, uv.y + float(j) * tsize.y, receiver - bias));
+/*
+                    float blocker = texture(_SHADOW_MAP, uv + vec2(i, j) * tsize).r;
+                    if (blocker + bias >= receiver) {
+                        ret += 1.0;
+                    }
+*/
+                }
+            }
+            return ret / 25.0;
+        } else {
+            ivec2 kernel = ivec2(max(vec2(1.0), ceil(penumbra / vsm_tsize)));
+            vec2 size = vec2(kernel - ivec2(1)) * vsm_tsize * 0.5;
+            float left = vsm_uv.x - size.x - vsm_tsize.x;
+            float right = vsm_uv.x + size.x;
+            float top = vsm_uv.y - size.y - vsm_tsize.y;
+            float bottom = vsm_uv.y + size.y;
 
-        vec4 avg = (texture(_VSM, vec2(right, bottom)) - texture(_VSM, vec2(right, top)) - texture(_VSM, vec2(left, bottom)) + texture(_VSM, vec2(left, top))) / float(kernel.x * kernel.y);
-        float E = 0.8975 + avg.x + avg.y;
-        float E2 = 0.8975 + avg.z + avg.w;
-        float V = E2 - E * E;
-        if (receiver < E) {
-            return 1.0;
+            vec2 avg = vec2(texture(_VSM, vec2(right, bottom)) - texture(_VSM, vec2(right, top)) - texture(_VSM, vec2(left, bottom)) + texture(_VSM, vec2(left, top))) / float(kernel.x * kernel.y);
+            float E = 0.8975 + avg.x;
+
+            if (abs(E - receiver) < 0.005) {
+                return 1.0;
+            }
+
+            float E2 = 0.8975 + avg.y;
+            float V = max(E2 - E * E, 0.000001);
+            if (receiver <= E) {
+                return 1.0;
+            }
+            float P = clamp(V / ( V + (receiver - E) * (receiver - E)), 0.0, 1.0);
+            return P;
         }
-        float P = V / ( V + (receiver - E) * (receiver - E));
-        return clamp(P, 0.0, 1.0);
     }
 
     /*
@@ -129,7 +172,7 @@ float Visibility(vec3 N, vec3 L) {
 }
 
 void main() {
-/*
+
     vec3 N = normalize(_FRAG_NORM);
     vec3 L = normalize( _LIGHT._DIR);
     vec3 V = normalize(vec3(_CAM[3]) - _FRAG_POS);
@@ -144,7 +187,7 @@ void main() {
     0.0, 1.0);
 
     _FRAG_COLOR = texture(_MAIN_TEX, _FRAG_UV) * vec4(I, 1.0);
-*/
+
     /*
     vec3 N = normalize(_FRAG_NORM);
     vec3 L = normalize( _LIGHT._DIR);
@@ -155,6 +198,7 @@ void main() {
     // _FRAG_COLOR = vec4(1.0);
     //_FRAG_COLOR = vec4(texture(_SHADOW_MAP, _FRAG_UV).r, 0.0, 0.0, 1.0);
 
+    /*
     vec4 sam = vec4(texelFetch(_VSM, coord, 0).r, texelFetch(_VSM, coord - ivec2(1, 0), 0).r, texelFetch(_VSM, coord - ivec2(0, 1), 0).r, texelFetch(_VSM, coord - ivec2(1, 1), 0).r);
     vec4 logSample = floor(log2(sam));
     vec4 level = max(vec4(0.0), logSample + vec4(15.0));
@@ -165,16 +209,15 @@ void main() {
     (level.w + (sam.w - min(level.w, 1.0) * pow(2.0, logSample.w)) / pow(2.0, max(-14.0, logSample.w)))
     );
     _FRAG_COLOR = vec4(0.5 * level.x, 0.0, 0.0, 1.0);
+    */
 /*
     _FRAG_COLOR = vec4(
     0.8975 +
-    result
-    +
     (
-    texelFetch(_VSM, coord, 0).g -
-    texelFetch(_VSM, coord - ivec2(1, 0), 0).g -
-    texelFetch(_VSM, coord - ivec2(0, 1), 0).g +
-    texelFetch(_VSM, coord - ivec2(1, 1), 0).g
+    texelFetch(_VSM, coord, 0).r -
+    texelFetch(_VSM, coord - ivec2(1, 0), 0).r -
+    texelFetch(_VSM, coord - ivec2(0, 1), 0).r +
+    texelFetch(_VSM, coord - ivec2(1, 1), 0).r
     )
     ,
     0.0, 0.0, 1.0);

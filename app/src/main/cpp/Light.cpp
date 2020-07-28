@@ -8,6 +8,7 @@
 #include "Renderer.h"
 #include "Shader.h"
 #include "Transform.h"
+#include "Time.h"
 
 #include "NDKHelper.h"
 
@@ -73,8 +74,9 @@ Light::Light(const vec3 &ambient, const vec3 &diffuse, const vec3 &specular, con
     glGenTextures(1, &shadowMap);
     glBindTexture(GL_TEXTURE_2D, shadowMap);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, SHADOW_MAP_WIDTH, SHADOW_MAP_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_SHORT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
@@ -108,7 +110,7 @@ Light::Light(const vec3 &ambient, const vec3 &diffuse, const vec3 &specular, con
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); // no GL_CLAMP_TO_BORDER defined, need to implement in fragment shader
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16I, SHADOW_MAP_WIDTH + 2, SHADOW_MAP_HEIGHT + 2, 0, GL_RGBA_INTEGER, GL_SHORT, NULL); // clamp to [0, 1] does not occur in the fragment shader with this format
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, SHADOW_MAP_WIDTH + 2, SHADOW_MAP_HEIGHT + 2, 0, GL_RG, GL_FLOAT, NULL); // clamp to [0, 1] does not occur in the fragment shader with this format
     }
 
     err = glGetError();
@@ -146,6 +148,8 @@ Light::~Light() {
 }
 
 void Light::RenderShadowMap() {
+    Time::StartTimer();
+
     glViewport(0, 0, SHADOW_MAP_WIDTH, SHADOW_MAP_HEIGHT);
     glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
     glClearDepthf(1.0f);
@@ -209,9 +213,14 @@ void Light::RenderShadowMap() {
 
     glViewport(0, 0, width, height);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    float elapsed = Time::StopTimer();
+    LOGI("Rendering shadow map took %f seconds", elapsed);
 }
 
 void Light::RenderHSM() {
+    Time::StartTimer();
+
     // render hsm base level
     glViewport(0, 0, SHADOW_MAP_WIDTH, SHADOW_MAP_HEIGHT);
     glBindFramebuffer(GL_FRAMEBUFFER, hsmFBO[0]);
@@ -242,9 +251,14 @@ void Light::RenderHSM() {
 
     glViewport(0, 0, width, height);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    float elapsed = Time::StopTimer();
+    LOGI("Rendering HSM took %f seconds", elapsed);
 }
 
 void Light::RenderVSM() {
+    Time::StartTimer();
+
     // render vsm base
     glViewport(0, 0, SHADOW_MAP_WIDTH + 2, SHADOW_MAP_HEIGHT + 2);
     glBindFramebuffer(GL_FRAMEBUFFER, vsmFBO[0]);
@@ -294,15 +308,17 @@ void Light::RenderVSM() {
     averageDepth = sum[0] / (SHADOW_MAP_WIDTH * SHADOW_MAP_HEIGHT);
      */
 
+/*
     GLenum err;
+    err = glGetError();
     if (err != GL_NO_ERROR) {
         LOGI("glerror: %d", err);
     }
-    int vsmPixels[34][34][4];
-    glReadPixels(0, 0, SHADOW_MAP_WIDTH + 2, SHADOW_MAP_HEIGHT + 2, GL_RGBA, GL_INT, vsmPixels);
+    float vsmPixels[34][34][4];
+    glReadPixels(0, 0, SHADOW_MAP_WIDTH + 2, SHADOW_MAP_HEIGHT + 2, GL_RGBA, GL_FLOAT, vsmPixels);
     LOGI("start");
     for (int i=1; i<=32; i++) {
-        LOGI("%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d ",
+        LOGI("%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f ",
                 vsmPixels[i][1][0],
              vsmPixels[i][2][0],
              vsmPixels[i][3][0],
@@ -338,10 +354,13 @@ void Light::RenderVSM() {
                 );
     }
     LOGI("end");
-
+    */
     // store the final result as vsm
     vsm = vsmTemp[(n + m) % 2];
 
     glViewport(0, 0, width, height);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    float elapsed = Time::StopTimer();
+    LOGI("Rendering VSM took %f seconds", elapsed);
 }
