@@ -110,7 +110,7 @@ Light::Light(const vec3 &ambient, const vec3 &diffuse, const vec3 &specular, con
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); // no GL_CLAMP_TO_BORDER defined, need to implement in fragment shader
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, SHADOW_MAP_WIDTH + 2, SHADOW_MAP_HEIGHT + 2, 0, GL_RG, GL_FLOAT, NULL); // clamp to [0, 1] does not occur in the fragment shader with this format
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32I, SHADOW_MAP_WIDTH + 2, SHADOW_MAP_HEIGHT + 2, 0, GL_RG_INTEGER, GL_INT, NULL); // clamp to [0, 1] does not occur in the fragment shader with this format
     }
 
     err = glGetError();
@@ -314,11 +314,11 @@ void Light::RenderVSM() {
     if (err != GL_NO_ERROR) {
         LOGI("glerror: %d", err);
     }
-    float vsmPixels[34][34][4];
-    glReadPixels(0, 0, SHADOW_MAP_WIDTH + 2, SHADOW_MAP_HEIGHT + 2, GL_RGBA, GL_FLOAT, vsmPixels);
+    int vsmPixels[34][34][4];
+    glReadPixels(0, 0, SHADOW_MAP_WIDTH + 2, SHADOW_MAP_HEIGHT + 2, GL_RGBA_INTEGER, GL_INT, vsmPixels);
     LOGI("start");
     for (int i=1; i<=32; i++) {
-        LOGI("%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f ",
+        LOGI("%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d ",
                 vsmPixels[i][1][0],
              vsmPixels[i][2][0],
              vsmPixels[i][3][0],
@@ -354,7 +354,7 @@ void Light::RenderVSM() {
                 );
     }
     LOGI("end");
-    */
+*/
     // store the final result as vsm
     vsm = vsmTemp[(n + m) % 2];
 
