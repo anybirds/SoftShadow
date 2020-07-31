@@ -13,6 +13,6 @@ void main() {
         _FRAG_DEPTH = ivec2(0);
     } else {
         float depth = texelFetch(_SHADOW_MAP, ivec2(gl_FragCoord) - ivec2(1), 0).r;
-        _FRAG_DEPTH = ivec2((-0.5 + depth) * 4096.0, (-0.5 + depth * depth) * 4096.0);
+        _FRAG_DEPTH = ivec2((-0.5 + depth) * 16384.0, (-0.5 + depth * depth) * 16384.0);
     }
 }
