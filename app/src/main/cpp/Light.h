@@ -2,6 +2,7 @@
 #define LIGHT_H
 
 #include <unordered_set>
+#include <GLES3/gl3ext.h>
 #include <GLES3/gl3.h>
 #include <glm/glm.hpp>
 

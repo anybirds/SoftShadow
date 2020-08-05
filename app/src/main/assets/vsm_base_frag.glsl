@@ -8,11 +8,10 @@ uniform sampler2D _SHADOW_MAP;
 out ivec2 _FRAG_DEPTH;
 
 void main() {
-    if (int(gl_FragCoord.x) == 0 || int(gl_FragCoord.y) == 0 || int(gl_FragCoord.x) == textureSize(_SHADOW_MAP, 0).x + 1 || int(gl_FragCoord.y) == textureSize(_SHADOW_MAP, 0).y + 1) {
-        // zero edge
-        _FRAG_DEPTH = ivec2(0);
-    } else {
-        float depth = texelFetch(_SHADOW_MAP, ivec2(gl_FragCoord) - ivec2(1), 0).r;
-        _FRAG_DEPTH = ivec2((-0.5 + depth) * 16384.0, (-0.5 + depth * depth) * 16384.0);
-    }
+    // sample from shadow map
+    float depth = texelFetch(_SHADOW_MAP, ivec2(gl_FragCoord), 0).r;
+
+    // clamp to one-sided border effect
+    bvec2 inner = equal(gl_FragCoord.xy, max(gl_FragCoord.xy, vec2(1.0)));
+    _FRAG_DEPTH = ivec2((-0.5 + vec2(depth, depth * depth)) * 65536.0) * ivec2(inner.x && inner.y);
 }

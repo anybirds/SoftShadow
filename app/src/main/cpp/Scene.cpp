@@ -63,8 +63,10 @@ Scene::Scene() {
     if (err != GL_NO_ERROR) {
         LOGI("glerror before cam : %d", err);
     }
+    quat cameraRotation = rotate(quat(mat4(1.0f)), radians(-45.0f), vec3(0.0f, 1.0f, 0.0f));
+    mainCameraGameObject = new GameObject(vec3(-5.0f, 3.0f, 5.0f), cameraRotation, vec3(1.0f));
     // mainCameraGameObject = new GameObject(vec3(0.0f, 15.0f, 0.0f), quat(radians(vec3(-90.0f, 0.0f, 0.0f))), vec3(1.0f));
-    mainCameraGameObject = new GameObject(vec3(0.0f, 3.0f, 7.0f), quat(mat4(1.0f)), vec3(1.0f));
+    // mainCameraGameObject = new GameObject(vec3(0.0f, 3.0f, 7.0f), quat(mat4(1.0f)), vec3(1.0f));
     mainCameraCamera = new Camera(perspective(radians(60.0f), (float)width / (float)height, 0.1f, 1000.0f));
     mainCameraGameObject->AddComponent<Camera>(mainCameraCamera);
     Camera::SetMainCamera(mainCameraCamera);
@@ -83,31 +85,20 @@ Scene::Scene() {
     tileRenderer->SetMaterial(tileMaterial);
     tileRenderer->SetMesh(tileMesh);
 
-    quat lightRotation = rotate(quat(mat4(1.0f)), radians(45.0f), vec3(0.0f, 1.0f, 0.0f));
-    lightRotation = rotate(lightRotation, radians(-45.0f), vec3(1.0f, 0.0f, 0.0f));
-    // quat lightRotation = rotate(quat(mat4(1.0f)), radians(-45.0f), vec3(1.0f, 0.0f, 0.0f));
+    // quat lightRotation = rotate(quat(mat4(1.0f)), radians(45.0f), vec3(0.0f, 1.0f, 0.0f));
+    // lightRotation = rotate(lightRotation, radians(-45.0f), vec3(1.0f, 0.0f, 0.0f));
+    quat lightRotation = rotate(quat(mat4(1.0f)), radians(-45.0f), vec3(1.0f, 0.0f, 0.0f));
+
     /*
     quat lightRotation = rotate(quat(mat4(1.0f)), radians(90.0f), vec3(0.0f, 1.0f, 0.0f));
     lightRotation = rotate(lightRotation, radians(-45.0f), vec3(1.0f, 0.0f, 0.0f));
      */
-    lightGameObject = new GameObject(vec3(10.0f), lightRotation, vec3(1.0f));
-    lightLight = new Light(vec3(0.2f), vec3(1.0f), vec3(1.0f), vec2(0.04f));
+    lightGameObject = new GameObject(vec3(0.0, 10.0f, 10.0f), lightRotation, vec3(1.0f));
+    lightLight = new Light(vec3(0.2f), vec3(1.0f), vec3(1.0f), vec2(0.03f));
     lightGameObject->AddComponent<Light>(lightLight);
     Light::SetMainLight(lightLight);
 }
 
 Scene::~Scene() {
-    delete girlModel;
-    delete girlTexture;
-    delete litVertexShader;
-    delete litFragmentShader;
-    delete girlMaterial;
-    delete girlGameObject;
-    delete girlRenderer;
-    delete girlMesh;
-    delete mainCameraGameObject;
-    delete mainCameraCamera;
-    delete girlRotateScript;
-    delete lightGameObject;
-    delete lightLight;
+    // should delete all the members
 }
