@@ -166,7 +166,7 @@ void Light::RenderShadowMap() {
     glDepthMask(GL_TRUE);
 
     glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
+    glCullFace(GL_FRONT);
 
     for (Renderer *rend : Renderer::renderers) {
         Mesh *mesh = rend->GetMesh();

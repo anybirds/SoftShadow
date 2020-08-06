@@ -18,7 +18,8 @@ in vec2 _FRAG_UV;
 
 uniform mat4 _CAM;
 uniform sampler2D _MAIN_TEX;
-uniform highp sampler2DShadow _SHADOW_MAP;
+uniform sampler2D _SHADOW_MAP;
+uniform highp sampler2DShadow _SHADOW_MAP_PCF;
 uniform sampler2D _HSM;
 uniform highp isampler2D _VSM;
 uniform Light _LIGHT;
@@ -82,72 +83,65 @@ float BlockerSearch(ivec2 kernel, float receiver, vec2 uv, vec2 tsize, vec2 hsm_
     return invalid * receiver + (1.0 - invalid) * (clamp((E - P * receiver) / (1.0 - P), hsm_depth.x, receiver));
 }
 
+float Random(vec4 seed) {
+    float dot_product = dot(seed, vec4(12.9898,78.233,45.164,94.673));
+    return fract(sin(dot_product) * 43758.5453);
+}
+
 float Visibility(vec3 N, vec3 L) {
     vec4 _LIGHT_FRAG_POS = _LIGHT._WLP * vec4(_FRAG_POS, 1.0);
     vec3 _NORM_FRAG_POS = _LIGHT_FRAG_POS.xyz / _LIGHT_FRAG_POS.w;
     float receiver = _NORM_FRAG_POS.z * 0.5 + 0.5;
     vec2 uv = _NORM_FRAG_POS.xy * 0.5 + 0.5;
-    vec2 tsize = vec2(1.0) / vec2(textureSize(_SHADOW_MAP, 0));
-
+    vec2 shadowMapSize = vec2(textureSize(_SHADOW_MAP, 0));
+    vec2 shadowMapTexelSize = vec2(1.0) / shadowMapSize;
     vec2 area = _LIGHT._AREA;
-    ivec2 kernel = ivec2(ceil(area / tsize));
-    float level = ceil(log2(max(area.x / tsize.x, area.y / tsize.y))); // need to clamp between 0 ~ HSM_MAX_LEVEL
-    vec2 depth = vec2(textureLod(_HSM, uv, level));
-    // determining fully-lit and umbra region by HSM failed because it was hard to calculate the exact bias value based on HSM level.
-    // float bias = max(0.005 * (1.0 - dot(N, L)), 0.001);
-    /*if (receiver > depth.y + bias) {
-        return 0.0;
-    } else if (receiver < depth.x + bias) {
-        return 1.0;
-    } else */ {
-        // PCSS
-        float zavg = BlockerSearch(kernel, receiver, uv, tsize, depth);
-        vec2 penumbra = ((receiver / zavg) - 1.0) * _LIGHT._AREA;
 
-        // contact shadow
-        /* if (abs(zavg - receiver) < 0.01) {
-            float ret = 0.0;
-            for (int i=-1; i<=1; i++) {
-                for (int j=-1; j<=1; j++) {
-                    ret += texture(_SHADOW_MAP, vec3(uv.x + float(i) * tsize.x, uv.y + float(j) * tsize.y, receiver - bias));
-                }
-            }
-            return ret / 9.0;
-        } else */ {
-            ivec2 kernel = ivec2(clamp(ceil(penumbra / tsize), vec2(3.0), vec2(50.0)));
+    vec2 poissonDisk[16] = vec2[](
+    vec2(-0.94201624, -0.39906216),
+    vec2(0.94558609, -0.76890725),
+    vec2(-0.094184101, -0.92938870),
+    vec2(0.34495938, 0.29387760),
+    vec2(-0.91588581, 0.45771432),
+    vec2(-0.81544232, -0.87912464),
+    vec2(-0.38277543, 0.27676845),
+    vec2(0.97484398, 0.75648379),
+    vec2(0.44323325, -0.97511554),
+    vec2(0.53742981, -0.47373420),
+    vec2(-0.26496911, -0.41893023),
+    vec2(0.79197514, 0.19090188),
+    vec2(-0.24188840, 0.99706507),
+    vec2(-0.81409955, 0.91437590),
+    vec2(0.19984126, 0.78641367),
+    vec2(0.14383161, -0.14100790)
+    );
 
-            vec2 size = vec2(kernel - ivec2(1)) * tsize * 0.5;
+    float theta = 2.0 * 3.1415926535 * Random(vec4(_FRAG_POS, _FRAG_POS.z));
+    mat2 rot = mat2(cos(theta), sin(theta), -sin(theta), cos(theta));
 
-            float left = uv.x - size.x - tsize.x;
-            float right = uv.x + size.x;
-            float top = uv.y - size.y - tsize.y;
-            float bottom = uv.y + size.y;
-
-            vec2 moment = (vec2(momentBilinear(_VSM, left, right, top, bottom))) / float(kernel.x * kernel.y);
-            float E = 0.5 + moment.x;
-            float E2 = 0.5 + moment.y;
-            float V = max(E2 - E * E, pow(2.0, -18.0));
-
-
-            float P = clamp(V / (V + (receiver - E) * (receiver - E)), 0.0, 1.0);
-            float invalid = float(receiver <= E);
-            return invalid * 1.0 + (1.0 - invalid) * P;
-        }
+    // blocker search
+    float zavg = 0.0;
+    float cnt = 0.0;
+    for (int i=0; i<16; i++) {
+        vec2 tap = rot * poissonDisk[i];
+        float depth = texelFetch(_SHADOW_MAP, ivec2(shadowMapSize * (uv + tap * area * 0.5)), 0).r;
+        float test = float(receiver > depth);
+        cnt += test;
+        zavg += test * depth;
     }
+    zavg = min(receiver, zavg / cnt);
 
-    /*
-    // PCF non-filtering, 3 * 3 rect kernel
+    // penumbra width estimation
+    vec2 penumbra = max(2.0 * shadowMapTexelSize, ((receiver / zavg) - 1.0) * _LIGHT._AREA);
+
+    // PCF
     float ret = 0.0;
-    for (int i=-1; i<=1; i++) {
-        for (int j=-1; j<=1; j++) {
-            float blocker = texture(_SHADOW_MAP, uv + vec2(i, j) * tsize).r;
-            if (blocker + bias >= receiver) {
-                ret += 1.0;
-            }
-        }
+    for (int i=0; i<16; i++) {
+        vec2 tap = rot * poissonDisk[i];
+        ret += texture(_SHADOW_MAP_PCF, vec3(uv + tap * penumbra * 0.5, receiver));
+        // ret += float(receiver < texelFetch(_SHADOW_MAP, ivec2(shadowMapSize * (uv + tap * penumbra * 0.5)), 0).r);
     }
-    return ret / 9.0;
-    */
+    return ret / 16.0;
 }
 
 void main() {
@@ -166,7 +160,6 @@ void main() {
     0.0, 1.0);
 
     _FRAG_COLOR = texture(_MAIN_TEX, _FRAG_UV) * vec4(I, 1.0);
-
 /*
     // test vsm
     ivec2 coord = ivec2(floor(_FRAG_UV * vec2(textureSize(_VSM, 0))));
