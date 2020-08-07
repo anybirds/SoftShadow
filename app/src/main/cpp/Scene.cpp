@@ -21,31 +21,14 @@ using namespace glm;
 extern EGLint width, height;
 
 Scene::Scene() {
-    GLenum err;
-    err = glGetError();
-    if (err != GL_NO_ERROR) {
-        LOGI("glerror before scene : %d", err);
-    }
     girlModel = new Model("girl.obj");
     girlMesh = new Mesh(girlModel);
     tileModel = new Model("tile.obj");
     tileMesh = new Mesh(tileModel);
-    err = glGetError();
-    if (err != GL_NO_ERROR) {
-        LOGI("glerror before tex : %d", err);
-    }
     girlTexture = new Texture("girl_diffuse.png");
     tileTexture = new Texture("tile_diffuse.jpg");
-    err = glGetError();
-    if (err != GL_NO_ERROR) {
-        LOGI("glerror before shader : %d", err);
-    }
     litVertexShader = new Shader("lit_vert.glsl", GL_VERTEX_SHADER);
     litFragmentShader = new Shader("lit_frag.glsl", GL_FRAGMENT_SHADER);
-    err = glGetError();
-    if (err != GL_NO_ERROR) {
-        LOGI("glerror before mat : %d", err);
-    }
     girlMaterial = new Material(litVertexShader, litFragmentShader);
     girlMaterial->SetMainTexture(girlTexture);
     girlMaterial->SetVector("_AMBIENT", vec3(1.0f));
@@ -59,10 +42,6 @@ Scene::Scene() {
     tileMaterial->SetVector("_SPECULAR", vec3(1.0f));
     tileMaterial->SetFloat("_SHININESS", 25.0f);
 
-    err = glGetError();
-    if (err != GL_NO_ERROR) {
-        LOGI("glerror before cam : %d", err);
-    }
     quat cameraRotation = rotate(quat(mat4(1.0f)), radians(-45.0f), vec3(0.0f, 1.0f, 0.0f));
     mainCameraGameObject = new GameObject(vec3(-6.0f, 3.0f, 6.0f), cameraRotation, vec3(1.0f));
     // mainCameraGameObject = new GameObject(vec3(0.0f, 15.0f, 0.0f), quat(radians(vec3(-90.0f, 0.0f, 0.0f))), vec3(1.0f));

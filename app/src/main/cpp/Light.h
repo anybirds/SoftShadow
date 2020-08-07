@@ -23,19 +23,6 @@ private:
     static Shader *shadowMapFragmentShader;
     static Material *shadowMapMaterial;
 
-    static GLuint emptyVao;
-    static Shader *quadVertexShader;
-
-    static Shader *hsmFragmentShader;
-    static Shader *hsmBaseFragmentShader;
-    static Material *hsmMaterial;
-    static Material *hsmBaseMaterial;
-
-    static Shader *vsmFragmentShader;
-    static Shader *vsmBaseFragmentShader;
-    static Material *vsmMaterial;
-    static Material *vsmBaseMaterial;
-
 public:
     static Light *GetMainLight() { return mainLight; }
     static void SetMainLight(Light *mainLight) { Light::mainLight = mainLight; }
@@ -44,14 +31,6 @@ public:
 private:
     GLuint shadowMapFBO;
     GLuint shadowMap;
-
-    GLuint hsmFBO[HSM_MAX_LEVEL];
-    GLuint hsm;
-
-    GLuint vsmFBO[2];
-    GLuint vsmTemp[2];
-    GLuint vsm;
-    float averageDepth;
 
     glm::mat4 normalization;
 
@@ -66,8 +45,6 @@ public:
     virtual ~Light();
 
     void RenderShadowMap();
-    void RenderHSM();
-    void RenderVSM();
 
     friend class Camera;
     friend class Material;

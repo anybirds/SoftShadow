@@ -20,8 +20,6 @@ uniform mat4 _CAM;
 uniform sampler2D _MAIN_TEX;
 uniform sampler2D _SHADOW_MAP;
 uniform highp sampler2DShadow _SHADOW_MAP_PCF;
-uniform sampler2D _HSM;
-uniform highp isampler2D _VSM;
 uniform Light _LIGHT;
 uniform vec3 _AMBIENT;
 uniform vec3 _DIFFUSE;
@@ -29,59 +27,6 @@ uniform vec3 _SPECULAR;
 uniform float _SHININESS;
 
 out vec4 _FRAG_COLOR;
-
-/*
-// search area optimization
-vec2 SearchArea(float receiver, vec2 uv, vec2 tsize) {
-    vec2 area = _LIGHT._AREA;
-    float level = ceil(log2(max(area.x / tsize.x, area.y / tsize.y))) + 1.0; // need to clamp between 0 ~ HSM_MAX_LEVEL
-    float minDepth = textureLod(_HSM, uv, level).r;
-    area = (minDepth / receiver) * area;
-    return area;
-}
-*/
-
-vec2 momentBilinear(highp isampler2D tex, float left, float right, float top, float bottom) {
-    vec2 size = vec2(textureSize(tex, 0));
-
-    vec2 tsize = vec2(1.0) / vec2(textureSize(tex, 0));
-
-    vec2 p0q0 = vec2(texture(tex, vec2(right, bottom)).xy - texture(tex, vec2(right, top)).xy - texture(tex, vec2(left, bottom)).xy + texture(tex, vec2(left, top)).xy) / 65536.0;
-    vec2 p1q0 = vec2(texture(tex, vec2(right + tsize.x, bottom)).xy - texture(tex, vec2(right + tsize.x, top)).xy - texture(tex, vec2(left + tsize.x, bottom)).xy + texture(tex, vec2(left + tsize.x, top)).xy) / 65536.0;
-    vec2 p0q1 = vec2(texture(tex, vec2(right, bottom + tsize.y)).xy - texture(tex, vec2(right, top + tsize.y)).xy - texture(tex, vec2(left, bottom + tsize.y)).xy + texture(tex, vec2(left, top + tsize.y)).xy) / 65536.0;
-    vec2 p1q1 = vec2(texture(tex, vec2(right, bottom) + tsize).xy - texture(tex, vec2(right, top) + tsize).xy - texture(tex, vec2(left, bottom) + tsize).xy + texture(tex, vec2(left, top) + tsize).xy) / 65536.0;
-
-    float a = fract(left * size.x);
-
-    vec2 pInterp_q0 = mix(p0q0, p1q0, a);
-    vec2 pInterp_q1 = mix(p0q1, p1q1, a);
-
-    float b = fract(top * size.y);
-    return mix(pInterp_q0, pInterp_q1, b);
-}
-
-float BlockerSearch(ivec2 kernel, float receiver, vec2 uv, vec2 tsize, vec2 hsm_depth) {
-    // ivec2 kernel = ivec2(ceil(SearchArea(receiver, uv, tsize) / tsize));
-
-    float zsum = 0.0;
-    float cnt = 0.0;
-
-    vec2 size = vec2(kernel - ivec2(1)) * tsize * 0.5;
-    float left = uv.x - size.x - tsize.x;
-    float right = uv.x + size.x;
-    float top = uv.y - size.y - tsize.y;
-    float bottom = uv.y + size.y;
-
-    vec2 moment = (vec2(momentBilinear(_VSM, left, right, top, bottom))) / float(kernel.x * kernel.y);
-    float E = 0.5 + moment.x;
-    float E2 = 0.5 + moment.y;
-
-    float V = max(E2 - E * E, pow(2.0, -18.0));
-
-    float P = clamp(V / ( V + (receiver - E) * (receiver - E)), 0.0, 1.0);
-    float invalid = float(receiver <= E);
-    return invalid * receiver + (1.0 - invalid) * (clamp((E - P * receiver) / (1.0 - P), hsm_depth.x, receiver));
-}
 
 float Random(vec4 seed) {
     float dot_product = dot(seed, vec4(12.9898,78.233,45.164,94.673));
@@ -160,17 +105,4 @@ void main() {
     0.0, 1.0);
 
     _FRAG_COLOR = texture(_MAIN_TEX, _FRAG_UV) * vec4(I, 1.0);
-/*
-    // test vsm
-    ivec2 coord = ivec2(floor(_FRAG_UV * vec2(textureSize(_VSM, 0))));
-    _FRAG_COLOR = vec4(
-    0.5 +
-    float(
-    (texelFetch(_VSM, coord, 0).r -
-    texelFetch(_VSM, coord - ivec2(1, 0), 0).r -
-    texelFetch(_VSM, coord - ivec2(0, 1), 0).r +
-    texelFetch(_VSM, coord - ivec2(1, 1), 0).r)) / 65536.0
-    ,
-    0.0, 0.0, 1.0);
-*/
 }
