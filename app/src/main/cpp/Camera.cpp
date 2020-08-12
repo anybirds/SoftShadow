@@ -7,9 +7,11 @@
 #include "Mesh.h"
 #include "Renderer.h"
 #include "Transform.h"
+#include "GUIComponent.h"
 
 #include "NDKHelper.h"
 
+using namespace std;
 using namespace glm;
 
 extern EGLint width, height;
@@ -103,6 +105,11 @@ void Camera::Render() {
             // mesh with EBO
             glDrawElements(GL_TRIANGLES, mesh->icnt, GL_UNSIGNED_INT, 0);
         }
+    }
+
+    // render gui
+    for (pair<int, GUIComponent *> p : GUIComponent::guiComponents) {
+        p.second->Render();
     }
 
     // render setting

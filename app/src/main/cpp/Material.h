@@ -51,6 +51,7 @@ public:
 
     friend class Camera;
     friend class Light;
+    friend class Text;
 };
 
 #endif

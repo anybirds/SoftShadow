@@ -3,6 +3,7 @@
 
 #include <GLES3/gl3.h>
 #include <EGL/egl.h>
+#include <glm/glm.hpp>
 
 #include "NDKHelper.h"
 
@@ -13,6 +14,8 @@
 #include "Scene.h"
 #include "Script.h"
 #include "Time.h"
+#include "GUI.h"
+#include "Button.h"
 
 const EGLint attribs[] = {
         EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
@@ -66,6 +69,7 @@ bool init_display(struct android_app *app) {
 
     Time::Init();
     Light::Init();
+    GUI::Init();
 
     Script::Start();
 
@@ -107,6 +111,16 @@ void draw_frame() {
     eglSwapBuffers(display, surface);
 }
 
+int32_t handle_input(android_app *app, AInputEvent *event) {
+    if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION && AMotionEvent_getAction(event) == AMOTION_EVENT_ACTION_DOWN) {
+        float x = AMotionEvent_getX(event, 0);
+        float y = AMotionEvent_getY(event, 0);
+        Button::CheckIfPressed(glm::vec2(x, y));
+    }
+
+    return 0;
+}
+
 void handle_cmd(android_app *pApp, int32_t cmd) {
     switch (cmd) {
         case APP_CMD_INIT_WINDOW:
@@ -123,6 +137,7 @@ void handle_cmd(android_app *pApp, int32_t cmd) {
 
 void android_main(struct android_app *pApp) {
     pApp->onAppCmd = handle_cmd;
+    pApp->onInputEvent = handle_input;
 
     ndk_helper::JNIHelper::Init(pApp->activity, HELPER_CLASS_NAME);
     int events;

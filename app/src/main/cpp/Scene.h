@@ -11,6 +11,11 @@ class Renderer;
 class Shader;
 class Texture;
 class RotateScript;
+class Text;
+class Font;
+class Button;
+class Panel;
+class StatusScript;
 
 class Scene {
 private:
@@ -33,7 +38,16 @@ private:
     GameObject *tileGameObject;
     Renderer *tileRenderer;
     Mesh *tileMesh;
-
+    GameObject *textGameObject;
+    Text *textText;
+    Font *arialFont;
+    Texture *buttonTexture;
+    GameObject *buttonGameObject;
+    Button *buttonButton;
+    Texture *panelTexture;
+    GameObject *panelGameObject;
+    Panel *panelPanel;
+    StatusScript *statusScript;
 
 public:
     Scene();

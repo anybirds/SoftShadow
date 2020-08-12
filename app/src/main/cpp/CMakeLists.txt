@@ -7,6 +7,7 @@ set(LibsDir ${CMAKE_CURRENT_SOURCE_DIR}/../../../libs)
 set(NDKHelperDir ${LibsDir}/NDKHelper)
 set(NDKHelperSrcDir ${NDKHelperDir}/cpp)
 set(AssimpDir ${LibsDir}/assimp)
+set(FreeTypeDir ${LibsDir}/freetype-2.10.2)
 
 if ((NOT EXISTS ${LibsDir}/glm) OR
 (NOT EXISTS ${LibsDir}/glm/glm/glm.h))
@@ -19,6 +20,9 @@ endif()
 # build the ndk-helper library
 add_subdirectory( ${NDKHelperSrcDir}
         ${NDKHelperDir}/build/${CMAKE_BUILD_TYPE}/${ANDROID_ABI})
+
+add_subdirectory( ${FreeTypeDir}
+        ${FreeTypeDir}/build/${CMAKE_BUILD_TYPE}/${ANDROID_ABI})
 
 # add external libraries
 add_library(assimp SHARED IMPORTED)
@@ -41,10 +45,12 @@ target_include_directories(SoftShadow PRIVATE
         ${LibsDir}
         ${AssimpDir}/include
         ${AssimpDir}/build/${CMAKE_BUILD_TYPE}/${ANDROID_ABI}/include
-        ${LibsDir}/glm)
+        ${LibsDir}/glm
+        ${FreeTypeDir}/build/${CMAKE_BUILD_TYPE}/${ANDROID_ABI}/include)
 
 target_link_libraries(SoftShadow
         PRIVATE
         NdkHelper
         assimp
+        freetype
         )

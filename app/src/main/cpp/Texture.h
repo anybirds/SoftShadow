@@ -14,5 +14,6 @@ public:
     virtual ~Texture();
 
     friend class Material;
+    friend class GUIComponent;
 };
 #endif

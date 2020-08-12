@@ -13,9 +13,16 @@
 #include "Shader.h"
 #include "Texture.h"
 #include "Transform.h"
+#include "Font.h"
+#include "Text.h"
+#include "Button.h"
+#include "Panel.h"
+#include "Time.h"
+#include "StatusScript.h"
 
 #include "NDKHelper.h"
 
+using namespace std;
 using namespace glm;
 
 extern EGLint width, height;
@@ -76,6 +83,23 @@ Scene::Scene() {
     lightLight = new Light(vec3(0.2f), vec3(1.0f), vec3(1.0f), vec2(0.05f));
     lightGameObject->AddComponent<Light>(lightLight);
     Light::SetMainLight(lightLight);
+
+    arialFont = new Font("arial.ttf");
+    textGameObject = new GameObject(vec3(width - 280.0f, height - 100.0f, 0.0f), quat(mat4(1.0f)), vec3(1.0f));
+    textText = new Text("fps: ", arialFont, vec4(1.0f), 2);
+    textGameObject->AddComponent<Text>(textText);
+
+    buttonTexture = new Texture("check_img.png");
+    buttonGameObject = new GameObject(vec3(500.0f, 500.0f, 0.0f), quat(mat4(1.0f)), vec3(1.0f));
+    buttonButton = new Button(buttonTexture, vec2(300.0f, 300.0f), vec4(1.0f), 1);
+    buttonGameObject->AddComponent<Button>(buttonButton);
+
+    panelTexture = new Texture("white_img.jpg");
+    panelGameObject = new GameObject(vec3(width - 300.0f, height - 300.0f, 0.0f), quat(mat4(1.0f)), vec3(1.0f));
+    panelPanel = new Panel(panelTexture, vec2(300.0f, 300.0f), vec4(0.5f, 0.5f, 0.5f, 0.5f), 0);
+    panelGameObject->AddComponent<Panel>(panelPanel);
+
+    statusScript = new StatusScript(textText);
 }
 
 Scene::~Scene() {
