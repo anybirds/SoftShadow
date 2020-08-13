@@ -21,7 +21,7 @@ Font::Font(const string &path) {
         throw exception();
     }
 
-    FT_Set_Pixel_Sizes(face, 0, 36);
+    FT_Set_Pixel_Sizes(face, 0, 24);
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // disable byte-alignment restriction
 

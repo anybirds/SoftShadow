@@ -7,9 +7,6 @@
 
 #include "Component.h"
 
-#define SHADOW_MAP_WIDTH 1024
-#define SHADOW_MAP_HEIGHT 1024
-#define HSM_MAX_LEVEL 8
 #define LIGHT_SIZE 10.0f
 
 class Material;
@@ -22,14 +19,17 @@ private:
     static Shader *shadowMapFragmentShader;
     static Material *shadowMapMaterial;
 
+    static int shadowMapSize[2];
+
 public:
     static Light *GetMainLight() { return mainLight; }
     static void SetMainLight(Light *mainLight) { Light::mainLight = mainLight; }
     static void Init();
 
 private:
-    GLuint shadowMapFBO;
-    GLuint shadowMap;
+    int shadowMapSizeOption;
+    GLuint shadowMapFBO[2];
+    GLuint shadowMap[2];
 
     glm::mat4 normalization;
 
@@ -42,6 +42,9 @@ private:
 public:
     Light(const glm::vec3 &ambient, const glm::vec3 &diffuse, const glm::vec3 &specular, const glm::vec2 &area);
     virtual ~Light();
+
+    void SetShadowMapSizeSmall() { shadowMapSizeOption = 0; }
+    void SetShadowMapSizeBig() { shadowMapSizeOption = 1; }
 
     void RenderShadowMap();
 

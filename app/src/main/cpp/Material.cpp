@@ -232,8 +232,10 @@ void Material::SetMatrixArray(const char *name, const mat4 *value, int length) {
 void Material::UseTextures() {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, mainTexture->id);
+    Light *light = Light::GetMainLight();
+    GLuint shadowMap = light->shadowMap[light->shadowMapSizeOption];
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, Light::GetMainLight()->shadowMap);
+    glBindTexture(GL_TEXTURE_2D, shadowMap);
     glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, Light::GetMainLight()->shadowMap);
+    glBindTexture(GL_TEXTURE_2D, shadowMap);
 }

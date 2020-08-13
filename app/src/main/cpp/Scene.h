@@ -27,27 +27,35 @@ private:
     GameObject *girlGameObject;
     Renderer *girlRenderer;
     Mesh *girlMesh;
+    RotateScript *girlRotateScript;
+
     GameObject *mainCameraGameObject;
     Camera *mainCameraCamera;
-    RotateScript *girlRotateScript;
+
     GameObject *lightGameObject;
     Light *lightLight;
+
     Model *tileModel;
     Texture *tileTexture;
     Material *tileMaterial;
     GameObject *tileGameObject;
     Renderer *tileRenderer;
     Mesh *tileMesh;
-    GameObject *textGameObject;
-    Text *textText;
-    Font *arialFont;
-    Texture *buttonTexture;
-    GameObject *buttonGameObject;
-    Button *buttonButton;
+
+    StatusScript *statusScript;
     Texture *panelTexture;
     GameObject *panelGameObject;
     Panel *panelPanel;
-    StatusScript *statusScript;
+    Font *arialFont;
+    GameObject *fpsTextGameObject;
+    Text *fpsTextText;
+    GameObject *sizeTextGameObject;
+    Text *sizeTextText;
+    Texture *buttonTexture;
+    GameObject *sizeOptionButtonGameObject[2];
+    Button *sizeOptionButtonButton[2];
+    GameObject *sizeOptionTextGameObject[2];
+    Text *sizeOptionTextText[2];
 
 public:
     Scene();

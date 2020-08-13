@@ -30,8 +30,8 @@ void Button::CheckIfPressed(const vec2 &pointer) {
         float top = pos.y + button->size.y;
         if (pointer.x >= left && pointer.x <= right && height - pointer.y >= bottom && height - pointer.y <= top) {
             LOGI("pressed");
-            if (button->onPress) {
-                button->onPress();
+            if (button->onPressListener && button->onPress) {
+                button->onPress(button->onPressListener);
             }
         }
     }

@@ -24,6 +24,8 @@ public:
 
     virtual void Render();
 
+    void SetColor(const glm::vec4 &color) { this->color = color; }
+
     friend class Camera;
 };
 #endif

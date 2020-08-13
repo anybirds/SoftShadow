@@ -84,22 +84,35 @@ Scene::Scene() {
     lightGameObject->AddComponent<Light>(lightLight);
     Light::SetMainLight(lightLight);
 
-    arialFont = new Font("arial.ttf");
-    textGameObject = new GameObject(vec3(width - 280.0f, height - 100.0f, 0.0f), quat(mat4(1.0f)), vec3(1.0f));
-    textText = new Text("fps: ", arialFont, vec4(1.0f), 2);
-    textGameObject->AddComponent<Text>(textText);
-
-    buttonTexture = new Texture("check_img.png");
-    buttonGameObject = new GameObject(vec3(500.0f, 500.0f, 0.0f), quat(mat4(1.0f)), vec3(1.0f));
-    buttonButton = new Button(buttonTexture, vec2(300.0f, 300.0f), vec4(1.0f), 1);
-    buttonGameObject->AddComponent<Button>(buttonButton);
-
     panelTexture = new Texture("white_img.jpg");
     panelGameObject = new GameObject(vec3(width - 300.0f, height - 300.0f, 0.0f), quat(mat4(1.0f)), vec3(1.0f));
     panelPanel = new Panel(panelTexture, vec2(300.0f, 300.0f), vec4(0.5f, 0.5f, 0.5f, 0.5f), 0);
     panelGameObject->AddComponent<Panel>(panelPanel);
 
-    statusScript = new StatusScript(textText);
+    arialFont = new Font("arial.ttf");
+    fpsTextGameObject = new GameObject(vec3(width - 280.0f, height - 100.0f, 0.0f), quat(mat4(1.0f)), vec3(1.0f));
+    fpsTextText = new Text("", arialFont, vec4(1.0f), 1);
+    fpsTextGameObject->AddComponent<Text>(fpsTextText);
+
+    sizeTextGameObject = new GameObject(vec3(width - 280.0f, height - 150.0f, 0.0f), quat(mat4(1.0f)), vec3(1.0f));
+    sizeTextText = new Text("# Shadow Map Size", arialFont, vec4(1.0f), 1);
+    sizeTextGameObject->AddComponent<Text>(sizeTextText);
+
+    buttonTexture = new Texture("white_img.jpg");
+    sizeOptionButtonGameObject[0] = new GameObject(vec3(width - 280.0f, height - 225.0f, 0.0f), quat(mat4(1.0f)), vec3(1.0f));
+    sizeOptionButtonButton[0] = new Button(buttonTexture, vec2(120.0f, 50.0f), vec4(1.0f), 1);
+    sizeOptionButtonGameObject[0]->AddComponent<Button>(sizeOptionButtonButton[0]);
+    sizeOptionButtonGameObject[1] = new GameObject(vec3(width - 140.0f, height - 225.0f, 0.0f), quat(mat4(1.0f)), vec3(1.0f));
+    sizeOptionButtonButton[1] = new Button(buttonTexture, vec2(120.0f, 50.0f), vec4(1.0f), 1);
+    sizeOptionButtonGameObject[1]->AddComponent<Button>(sizeOptionButtonButton[1]);
+    sizeOptionTextGameObject[0] = new GameObject(vec3(width - 265.0f, height - 210.0f, 0.0f), quat(mat4(1.0f)), vec3(1.0f));
+    sizeOptionTextText[0] = new Text("512*512", arialFont, vec4(1.0f), 2);
+    sizeOptionTextGameObject[0]->AddComponent<Text>(sizeOptionTextText[0]);
+    sizeOptionTextGameObject[1] = new GameObject(vec3(width - 135.0f, height - 210.0f, 0.0f), quat(mat4(1.0f)), vec3(1.0f));
+    sizeOptionTextText[1] = new Text("1024*1024", arialFont, vec4(1.0f), 2);
+    sizeOptionTextGameObject[1]->AddComponent<Text>(sizeOptionTextText[1]);
+
+    statusScript = new StatusScript(fpsTextText, sizeTextText, sizeOptionButtonButton[0], sizeOptionButtonButton[1], sizeOptionTextText[0], sizeOptionTextText[1]);
 }
 
 Scene::~Scene() {

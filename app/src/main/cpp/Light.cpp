@@ -23,37 +23,43 @@ Shader *Light::shadowMapVertexShader;
 Shader *Light::shadowMapFragmentShader;
 Material *Light::shadowMapMaterial;
 
+int Light::shadowMapSize[2];
+
 void Light::Init() {
     shadowMapVertexShader = new Shader("shadow_map_vert.glsl", GL_VERTEX_SHADER);
     shadowMapFragmentShader = new Shader("shadow_map_frag.glsl", GL_FRAGMENT_SHADER);
     shadowMapMaterial = new Material(shadowMapVertexShader, shadowMapFragmentShader);
+
+    shadowMapSize[0] = 512;
+    shadowMapSize[1] = 1024;
 }
 
 Light::Light(const vec3 &ambient, const vec3 &diffuse, const vec3 &specular, const vec2 &area) : ambient(ambient), diffuse(diffuse), specular(specular), area(area) {
     // generate shadow map framebuffer
-    glGenFramebuffers(1, &shadowMapFBO);
+    glGenFramebuffers(2, shadowMapFBO);
 
     // generate shadow map texture
-    glGenTextures(1, &shadowMap);
-    glBindTexture(GL_TEXTURE_2D, shadowMap);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, SHADOW_MAP_WIDTH, SHADOW_MAP_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_SHORT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glGenTextures(2, shadowMap);
+    for (int i=0; i<2; i++) {
+        glBindTexture(GL_TEXTURE_2D, shadowMap[i]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, shadowMapSize[i], shadowMapSize[i], 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_SHORT, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-    // attach shadow map texture to framebuffer
-    glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowMap, 0);
-    glDrawBuffers(1, bufs);
-    glReadBuffer(GL_NONE);
+        // attach shadow map texture to framebuffer
+        glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO[i]);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowMap[i], 0);
+        glDrawBuffers(1, bufs);
+        glReadBuffer(GL_NONE);
+    }
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     // set normalization matrix
-    float ratio = (float)SHADOW_MAP_WIDTH / (float)SHADOW_MAP_HEIGHT;
-    normalization = ortho(-ratio * LIGHT_SIZE, ratio * LIGHT_SIZE, -LIGHT_SIZE, LIGHT_SIZE, 0.0f, 50.0f);
+    normalization = ortho(-LIGHT_SIZE, LIGHT_SIZE, -LIGHT_SIZE, LIGHT_SIZE, 0.0f, 50.0f);
 }
 
 Light::~Light() {
@@ -61,8 +67,8 @@ Light::~Light() {
 }
 
 void Light::RenderShadowMap() {
-    glViewport(0, 0, SHADOW_MAP_WIDTH, SHADOW_MAP_HEIGHT);
-    glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
+    glViewport(0, 0, shadowMapSize[shadowMapSizeOption], shadowMapSize[shadowMapSizeOption]);
+    glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO[shadowMapSizeOption]);
     glClearDepthf(1.0f);
     glClear(GL_DEPTH_BUFFER_BIT);
 

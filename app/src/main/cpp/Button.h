@@ -16,11 +16,15 @@ public:
     static void CheckIfPressed(const glm::vec2 &pointer);
 
 private:
-    std::function<void(void)> onPress;
+    void *onPressListener;
+    std::function<void(void *)> onPress;
 
 public:
     Button(Texture *texture, const glm::vec2 &size, const glm::vec4 &color = glm::vec4(1.0f), int renderOrder = 0);
     virtual ~Button();
+
+    void RegisterOnPressEvent(void *onPressListener, std::function<void(void *)> onPress) { this->onPressListener = onPressListener, this->onPress = onPress; }
+
 };
 
 #endif
