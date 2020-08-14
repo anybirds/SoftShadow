@@ -16,6 +16,7 @@
 #include "Time.h"
 #include "GUI.h"
 #include "Button.h"
+#include "Slider.h"
 
 const EGLint attribs[] = {
         EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
@@ -112,10 +113,17 @@ void draw_frame() {
 }
 
 int32_t handle_input(android_app *app, AInputEvent *event) {
-    if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION && AMotionEvent_getAction(event) == AMOTION_EVENT_ACTION_DOWN) {
+    if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION) {
+        int32_t action = AMotionEvent_getAction(event);
         float x = AMotionEvent_getX(event, 0);
         float y = AMotionEvent_getY(event, 0);
-        Button::CheckIfPressed(glm::vec2(x, y));
+        switch (action) {
+            case AMOTION_EVENT_ACTION_DOWN:
+                Button::CheckIfPressed(glm::vec2(x, y));
+            case AMOTION_EVENT_ACTION_MOVE:
+                Slider::CheckIfValueChanged(glm::vec2(x, y));
+                break;
+        }
     }
 
     return 0;

@@ -19,17 +19,15 @@ extern EGLint height;
 unordered_set<Button *> Button::buttons;
 
 void Button::CheckIfPressed(const vec2 &pointer) {
-    LOGI("%f %f", pointer.x, height - pointer.y);
     for (Button *button : buttons) {
         Transform *transform = button->GetGameObject()->GetTransform();
         vec3 pos = transform->GetLocalPosition();
         vec3 scale = transform->GetLocalScale();
         float left = pos.x;
-        float right = pos.x + button->size.x;
+        float right = pos.x + button->size.x * scale.x;
         float bottom = pos.y;
-        float top = pos.y + button->size.y;
+        float top = pos.y + button->size.y * scale.y;
         if (pointer.x >= left && pointer.x <= right && height - pointer.y >= bottom && height - pointer.y <= top) {
-            LOGI("pressed");
             if (button->onPressListener && button->onPress) {
                 button->onPress(button->onPressListener);
             }

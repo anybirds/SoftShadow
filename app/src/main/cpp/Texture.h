@@ -15,5 +15,6 @@ public:
 
     friend class Material;
     friend class GUIComponent;
+    friend class Slider;
 };
 #endif

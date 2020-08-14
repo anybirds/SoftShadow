@@ -7,7 +7,8 @@
 
 #include "Component.h"
 
-#define LIGHT_SIZE 10.0f
+#define HSM_MAX_LEVEL 8
+#define LIGHT_SIZE 7.5f
 
 class Material;
 class Shader;
@@ -21,6 +22,19 @@ private:
 
     static int shadowMapSize[2];
 
+    static GLuint emptyVao;
+    static Shader *quadVertexShader;
+
+    static Shader *hsmFragmentShader;
+    static Shader *hsmBaseFragmentShader;
+    static Material *hsmMaterial;
+    static Material *hsmBaseMaterial;
+
+    static Shader *vsmFragmentShader;
+    static Shader *vsmBaseFragmentShader;
+    static Material *vsmMaterial;
+    static Material *vsmBaseMaterial;
+
 public:
     static Light *GetMainLight() { return mainLight; }
     static void SetMainLight(Light *mainLight) { Light::mainLight = mainLight; }
@@ -28,8 +42,17 @@ public:
 
 private:
     int shadowMapSizeOption;
+    bool vssm;
+
     GLuint shadowMapFBO[2];
     GLuint shadowMap[2];
+
+    GLuint hsmFBO[2][HSM_MAX_LEVEL];
+    GLuint hsm[2];
+
+    GLuint vsmFBO[2][2];
+    GLuint vsmTemp[2][2];
+    GLuint vsm[2];
 
     glm::mat4 normalization;
 
@@ -46,7 +69,15 @@ public:
     void SetShadowMapSizeSmall() { shadowMapSizeOption = 0; }
     void SetShadowMapSizeBig() { shadowMapSizeOption = 1; }
 
+    void SetShadowAlgorithmPCF() { vssm = false; }
+    void SetShadowAlgorithmPCSS() { vssm = false; }
+    void SetShadowAlgorithmVSSM() { vssm = true; }
+
+    void SetAreaSize(const glm::vec2 &area) { this->area = area; }
+
     void RenderShadowMap();
+    void RenderHSM();
+    void RenderVSM();
 
     friend class Camera;
     friend class Material;

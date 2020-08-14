@@ -31,6 +31,7 @@ public:
     friend class Font;
     friend class GUIComponent;
     friend class Text;
+    friend class Slider;
 };
 
 #endif

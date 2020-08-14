@@ -37,8 +37,6 @@ Camera::~Camera() {
 void Camera::Render() {
     Light *light = Light::GetMainLight();
     light->RenderShadowMap();
-    // light->RenderHSM();
-    // light->RenderVSM();
 
     glViewport(0, 0, width, height);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
