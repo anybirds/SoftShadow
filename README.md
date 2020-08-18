@@ -1,6 +1,6 @@
 # Soft Shadow
 Various approaches to soft shadow implementation for android devices using GLES3. 
-![alt text](https://github.com/anybirds/SoftShadow/SoftShadow.jpg)
+![alt text](https://github.com/anybirds/SoftShadow/blob/master/SoftShadow.jpg)
 
 ## Feature 
 * Present 3 filtering algorithms: PCF, PCSS, VSSM
